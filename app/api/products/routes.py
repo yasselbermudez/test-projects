@@ -1,7 +1,7 @@
-from fastapi import FastAPI,HTTPException
+from fastapi import APIRouter,HTTPException
 from pydantic import BaseModel
 
-router = FastAPI()
+router = APIRouter()
 
 class Product(BaseModel):
     id: str

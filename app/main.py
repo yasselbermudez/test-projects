@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 from app.api.api import api_router
+from app.core.config import settings
 
 app = FastAPI(
-    title="Online Store API",
-    version="1.0.0",
+    title=settings.PROJECT_NAME,
+    version=settings.VERSION,
     description="API para una tienda en línea",
     docs_url="/docs",
     contact={
@@ -12,7 +13,7 @@ app = FastAPI(
     },
     )
 
-app.include_router(api_router,prefix="/api/v1")
+app.include_router(api_router,prefix=settings.API_V1_STR)
 
 # Check healty
 @app.get("/")
