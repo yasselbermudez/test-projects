@@ -1,36 +1,36 @@
 from typing import Optional
 from app.core.security import get_password_hash
 from fastapi import HTTPException
-from .schemas import UserCreate, UserLogin, Token, User, UserInDb
+from .schemas import UserCreate, UserLogin, Token, User
+from app.database.database import client as client_db, prepare_for_mongo, get_database
 
-fake_users_db:User = [
-    {
-        "id":"1",
-        "name":"yassel",
-        "email":"yassel@gmail.com",
-        "hashed_password":"12345678#hashed",
-        "is_active":True
-    }
-]
-
-def find_user(user_email:str) -> User:
-    for fake_user in fake_users_db:
-        if fake_user["email"] == user_email:
-            return fake_user
+async def find_user_by_email(user_email:str,db) -> Optional[dict]:
+    # Use the 'users' collection (ensure correct collection name)
+    return await db.users.find_one({"email": user_email})
+           
         
-def create(user_in:UserCreate):
-    user = UserInDb(
-        email=user_in.email,
-        name=user_in.name,
-        hashed_password=get_password_hash(user_in.password),
-        id=len(fake_users_db)+1,
-        is_active=True
-    )
-    print(user)
-    fake_users_db.append(user)
-
-def create_user(user_data:UserCreate):
-    user = find_user(user_data.email)
-    if user :
+async def create_user(user_data:UserCreate,db) -> dict:
+    
+    existing_user = await find_user_by_email(user_data.email,db)
+    
+    if existing_user :
         raise HTTPException(status_code=400,detail="User email already registered")
-    return create(user_data)
+    
+    hashed_password=get_password_hash(user_data.password)
+    
+    user_data_dict = user_data.dict()
+    
+    del user_data_dict["password"]
+
+    user_data_object = User(**user_data_dict)
+
+    user_data_doc = prepare_for_mongo(user_data_object.dict())
+    
+    user_data_doc["hashed_password"] = hashed_password
+
+    await db.users.insert_one(user_data_doc)
+    
+    # access_token = create_access_token(data={"sub": user_data_object.id})
+    # return {"access_token": access_token, "token_type": "bearer", "user": user_data_object}
+    
+    return {"result":"creado"}

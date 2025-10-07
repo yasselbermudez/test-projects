@@ -1,0 +1,14 @@
+version: '3.8'  # Usa una versión compatible
+
+services:
+  mongodb:  # Nombre del servicio
+    image: mongo:latest  # Usa una versión específica como "mongo:4.2.1" para mayor estabilidad:cite[6]:cite[8]
+    container_name: mi_mongodb
+    restart: always  # Para que se reinicie automáticamente si falla
+    ports:
+      - "27017:27017"  # MAPEO DE PUERTOS: puerto_de_tu_equipo:puerto_del_contenedor
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: usuario  # 🔐 NOMBRE DE USUARIO para el administrador
+      MONGO_INITDB_ROOT_PASSWORD: 1234     # 🔐 CONTRASEÑA para el administrador
+    volumes:
+      - ../mongo_data:/data/db  # 💾 Persistencia de datos (opcional, pero recomendado)

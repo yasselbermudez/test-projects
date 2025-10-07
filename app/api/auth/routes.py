@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, status
 from .schemas import UserCreate, UserLogin, Token, User
 from . import service
+from app.database.database import get_database
 
 router = APIRouter()
 
 @router.post("/register",status_code=status.HTTP_201_CREATED)
-async def register_user(user_data: UserCreate):
-    return service.create_user(user_data)
+async def register_user(user_data: UserCreate,db=Depends(get_database)):
+    result =  await service.create_user(user_data,db)
+    return result
 
 """
 @router.post("/login", response_model=Token)
