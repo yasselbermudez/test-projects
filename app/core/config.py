@@ -22,10 +22,12 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
-    """
+    
     # Database
     DATABASE_URL: str
-    
+    DB_NAME: str = "online_store_db"
+
+    """
     # CORS
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
     """

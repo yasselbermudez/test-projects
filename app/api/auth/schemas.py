@@ -1,23 +1,18 @@
+from  datetime import datetime, timezone 
 import uuid
 from pydantic import BaseModel, Field
 
-class UserInDb(BaseModel):
-    id: int
-    email: str
-    name: str
-    hashed_password:str
-    is_active: bool = True
-
 class User(BaseModel):
-    id: int
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     email: str
     name: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     is_active: bool = True
 
 class UserCreate(BaseModel):
+    name:str
     email:str
     password: str
-    name:str
 
 class UserLogin(BaseModel):
     email:str
