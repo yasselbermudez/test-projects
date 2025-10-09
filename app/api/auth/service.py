@@ -1,13 +1,17 @@
 from typing import Optional
-from app.core.security import get_password_hash
+import jwt
+from fastapi.security import HTTPAuthorizationCredentials
+from app.core.security import get_password_hash, verify_password, create_access_token,decode_access_token
 from fastapi import HTTPException
-from .schemas import UserCreate, UserLogin, Token, User
-from app.database.database import client as client_db, prepare_for_mongo, get_database
+from .schemas import UserCreate, UserLogin, User,UserInDb
+from app.database.database import prepare_for_mongo, parse_from_mongo
 
-async def find_user_by_email(user_email:str,db) -> Optional[dict]:
+async def find_user_by_email(user_email:str,db) -> Optional[UserInDb]:
     # Use the 'users' collection (ensure correct collection name)
     return await db.users.find_one({"email": user_email})
-           
+
+async def get_user_by_id(user_id: str,db) -> Optional[dict]:
+    return await db.users.find_one({"id": user_id})           
         
 async def create_user(user_data:UserCreate,db) -> dict:
     
@@ -30,7 +34,24 @@ async def create_user(user_data:UserCreate,db) -> dict:
 
     await db.users.insert_one(user_data_doc)
     
-    # access_token = create_access_token(data={"sub": user_data_object.id})
-    # return {"access_token": access_token, "token_type": "bearer", "user": user_data_object}
+    access_token = create_access_token(data={"sub": user_data_object.id})
     
-    return {"result":"creado"}
+    return {"access_token": access_token, "token_type": "bearer", "user": user_data_object}
+
+async def authenticate_user(login_data:UserLogin,db) -> dict:
+    
+    existing_user = await find_user_by_email(login_data.email,db)
+    hashed_password = existing_user.get('hashed_password')
+    is_verify = verify_password(login_data.password, hashed_password)
+
+    if not existing_user:
+        raise HTTPException(status_code=404, detail="User not existing")
+    if not is_verify:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    user_obj = UserInDb(**parse_from_mongo(existing_user))
+
+    access_token = create_access_token(data={"sub": user_obj.id})
+
+    return {"access_token": access_token, "token_type": "bearer", "user": user_obj}
+
