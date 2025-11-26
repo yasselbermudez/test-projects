@@ -1,5 +1,5 @@
 from typing import List
-from pydantic import AnyHttpUrl
+from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -27,9 +27,20 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     DB_NAME: str = "online_store_db"
 
-    """
     # CORS
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
+    BACKEND_CORS_ORIGINS: str = "http://localhost:5173"
+
+    # api key
+    HF_API_KEY: str
+
     """
+    @field_validator('BACKEND_CORS_ORIGINS', mode='before')
+    @classmethod
+    def parse_cors_origins(cls, v):
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(',')]
+        return v
+    """
+    
 
 settings = Settings()
