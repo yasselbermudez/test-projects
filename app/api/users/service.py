@@ -1,7 +1,7 @@
 from typing import Optional
 import jwt
 from app.core.security import decode_access_token
-from fastapi import Depends, HTTPException,Request,status
+
 from fastapi.security import OAuth2PasswordBearer
 from .schemas import User
 from app.database.database import parse_from_mongo, get_database
@@ -17,7 +17,7 @@ httpGET /api/users/me
 Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 
 """
-
+from fastapi import Depends, HTTPException,Request,status
 """Dependencia para rutas que requieren autenticación vía token en cookie"""
 
 async def get_current_user(request: Request, db=Depends(get_database)) -> User:
@@ -29,7 +29,6 @@ async def get_current_user(request: Request, db=Depends(get_database)) -> User:
         # 3) decodificar token y recuperar user
         payload = decode_access_token(token)
         # payload = {"user_id": 123, "exp": 1234567890, ...}
-        print(payload)
         user_id: str = payload.get("sub")
         if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid token")

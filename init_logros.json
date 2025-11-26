@@ -1,0 +1,110 @@
+[
+    {
+      "id": "1",
+      "nombre": "El Temerario del Fallo Muscular",
+      "descripcion": "Por completar 'Hasta que Temblen los Cimientos' por primera vez",
+      "pegatina": "/assets/logro1.png",
+      "misionAsociada": "Hasta que Temblen los Cimientos",
+      "idMision": "2",
+      "nivel": "1"
+    },
+    {
+      "id": "2",
+      "nombre": "El Fantasma de la Madrugada",
+      "descripcion": "Por completar 'El Ritual del Alba'",
+      "pegatina": "/assets/logro2.png",
+      "misionAsociada": "El Ritual del Alba",
+      "idMision": "4",
+      "nivel": "1"
+    },
+    {
+      "id": "3",
+      "nombre": "Mirada de Basilisco",
+      "descripcion": "Por completar 'El Muro de la Incomodidad'",
+      "pegatina": "/assets/logro3.png",
+      "misionAsociada": "El Muro de la Incomodidad",
+      "idMision": "5",
+      "nivel": "2"
+    },
+    {
+      "id": "4",
+      "nombre": "El Bufón Sagrado",
+      "descripcion": "Por completar 'El Eco en las Redes'",
+      "pegatina": "/assets/logro4.png",
+      "misionAsociada": "El Eco en las Redes",
+      "idMision": "6",
+      "nivel": "2"
+    },
+    {
+      "id": "5",
+      "nombre": "El Cazador Desinteresado",
+      "descripcion": "Por completar 'El Halcón'",
+      "pegatina": "/assets/logro5.png",
+      "misionAsociada": "El Halcón",
+      "idMision": "8",
+      "nivel": "3"
+    },
+    {
+      "id": "6",
+      "nombre": "El Campeón del Improvisado",
+      "descripcion": "Por completar 'El Loco Controlado'",
+      "pegatina": "/assets/logro6.png",
+      "misionAsociada": "El Loco Controlado",
+      "idMision": "9",
+      "nivel": "3"
+    },
+    {
+      "id": "7",
+      "nombre": "El que Desafió al Trono",
+      "descripcion": "Por completar 'El Juicio Final'",
+      "pegatina": "/assets/logro7.png",
+      "misionAsociada": "El Juicio Final",
+      "idMision": "10",
+      "nivel": "3"
+    },
+    {
+      "id": "8",
+      "nombre": "El Apóstol de la Autenticidad",
+      "descripcion": "Por completar 'El Sacrificio de la Vanidad'",
+      "pegatina": "/assets/logro8.png",
+      "misionAsociada": "El Sacrificio de la Vanidad",
+      "idMision": "11",
+      "nivel": "4"
+    },
+    {
+      "id": "9",
+      "nombre": "El que Cabalga la Tormenta",
+      "descripcion": "Por completar 'El Dios del Trueno'",
+      "pegatina": "/assets/logro9.png",
+      "misionAsociada": "El Dios del Trueno",
+      "idMision": "12",
+      "nivel": "4"
+    },
+    {
+      "id": "10",
+      "nombre": "PEREGRINO",
+      "descripcion": "Por completar 'ÉXODO'. El logro máximo",
+      "pegatina": "/assets/logro10.png",
+      "misionAsociada": "ÉXODO",
+      "idMision": "13",
+      "nivel": "4"
+    },
+    {
+      "id": "11",
+      "nombre": "DIGNUS EST NOMINE",
+      "descripcion": "Por completar 'ALCOHOLICUS PRIME'",
+      "pegatina": "/assets/logro11.png",
+      "misionAsociada": "ALCOHOLICUS PRIME",
+      "idMision": "14",
+      "nivel": "4"
+    },
+    {
+      "id": "12",
+      "nombre": "El Semidiós de la Colina",
+      "descripcion": "Por completar 'La Loma Semi-Desnuda'",
+      "pegatina": "/assets/logro12.png",
+      "misionAsociada": "La Loma Semi-Desnuda",
+      "idMision": "15",
+      "nivel": "4"
+    }
+]

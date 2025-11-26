@@ -1,0 +1,293 @@
+[
+    {
+      "id": "1",
+      "imagen": "bautismo_fuego.jpg",
+      "nombre": "El Bautismo de Fuego",
+      "nivel": {
+        "numeroNivel": 1,
+        "descripcionNivel": "El Iniciado",
+        "rangoXp": "0 - 500 XP",
+        "imagen": "/assets/nivel1.jpeg"
+      },
+      "recompensa": "50",
+      "extra": null,
+      "descripcion": "Completa tu primera rutina de gym sin rendirte, aunque sea con el peso mínimo.",
+      "logro": null
+    },
+    {
+      "id": "2",
+      "imagen": "cimientos_temblorosos.jpg",
+      "nombre": "Hasta que Temblen los Cimientos",
+      "nivel": {
+        "numeroNivel": 1,
+        "descripcionNivel": "El Iniciado",
+        "rangoXp": "0 - 500 XP",
+        "imagen": "/assets/nivel1.jpeg"
+      },
+      "recompensa": "100",
+      "extra": {
+        "descripcion": "Si logras que un extraño te vea y te diga '¡Eso es actitud!'",
+        "recompensa": "75"
+      },
+      "descripcion": "Realiza un set de sentadillas o flexiones hasta el fallo muscular absoluto. Las piernas/brazos deben temblar como varillas.",
+      "logro": {
+        "nombre": "El Temerario del Fallo Muscular",
+        "descripcion": "Por completar 'Hasta que Tiemblen los Cimientos' por primera vez",
+        "pegatina": "/assets/logro1.png"
+      }
+    },
+    {
+      "id": "3",
+      "imagen": "sombra_mamado.jpg",
+      "nombre": "La Sombra del Mamado",
+      "nivel": {
+        "numeroNivel": 1,
+        "descripcionNivel": "El Iniciado",
+        "rangoXp": "0 - 500 XP",
+        "imagen": "/assets/nivel1.jpeg"
+      },
+      "recompensa": "150",
+      "extra": null,
+      "descripcion": "Pídele a la persona más fuerte del gym que te corrija la forma en un ejercicio. Escucha y aplica.",
+      "logro": null
+    },
+    {
+      "id": "4",
+      "imagen": "ritual_alba.jpg",
+      "nombre": "El Ritual del Alba",
+      "nivel": {
+        "numeroNivel": 1,
+        "descripcionNivel": "El Iniciado",
+        "rangoXp": "0 - 500 XP",
+        "imagen": "/assets/nivel1.jpeg"
+      },
+      "recompensa": "200",
+      "extra": null,
+      "descripcion": "Entrena 5 días seguidos a primera hora de la mañana, venciendo al monstruo de la pereza.",
+      "logro": {
+        "nombre": "El Fantasma de la Madrugada",
+        "descripcion": "Por completar 'El Ritual del Alba'",
+        "pegatina": "/assets/logro2.png"
+      }
+    },
+    {
+      "id": "5",
+      "imagen": "muro_incomodidad.jpg",
+      "nombre": "El Muro de la Incomodidad",
+      "nivel": {
+        "numeroNivel": 2,
+        "descripcionNivel": "El Desafiante",
+        "rangoXp": "501 - 1500 XP",
+        "imagen": "/assets/nivel2.jpeg"
+      },
+      "recompensa": "510",
+      "extra": null,
+      "descripcion": "Mantén contacto visual firme y una sonrisa tranquila con 5 personas diferentes en un día (sin parecer un psicópata).",
+      "logro": {
+        "nombre": "Mirada de Basilisco",
+        "descripcion": "Por completar 'El Muro de la Incomodidad'",
+        "pegatina": "/assets/logro3.png"
+      }
+    },
+    {
+      "id": "6",
+      "imagen": "eco_redes.jpg",
+      "nombre": "El Eco en las Redes",
+      "nivel": {
+        "numeroNivel": 2,
+        "descripcionNivel": "El Desafiante",
+        "rangoXp": "501 - 1500 XP",
+        "imagen": "/assets/nivel2.jpeg"
+      },
+      "recompensa": "550",
+      "extra": null,
+      "descripcion": "Publica un video o foto mostrando tu fallo en un ejercicio, riéndote de ti mismo, con el título 'Caer es permitido, rendirse no'.",
+      "logro": {
+        "nombre": "El Bufón Sagrado",
+        "descripcion": "Por completar 'El Eco en las Redes'",
+        "pegatina": "/assets/logro4.png"
+      }
+    },
+    {
+      "id": "7",
+      "imagen": "viaje_solitario.jpg",
+      "nombre": "El Viaje del Solitario",
+      "nivel": {
+        "numeroNivel": 2,
+        "descripcionNivel": "El Desafiante",
+        "rangoXp": "501 - 1500 XP",
+        "imagen": "/assets/nivel2.jpeg"
+      },
+      "recompensa": "600",
+      "extra": {
+        "descripcion": "Si durante el viaje logras una idea o solución clara a un problema que te carcomía",
+        "recompensa": "100"
+      },
+      "descripcion": "Camina 10 km solo, sin música, solo con tus pensamientos. Enfréntate al silencio dentro de tu cabeza.",
+      "logro": null
+    },
+    {
+      "id": "8",
+      "imagen": "halcon.jpg",
+      "nombre": "El Halcón",
+      "nivel": {
+        "numeroNivel": 3,
+        "descripcionNivel": "El Predador",
+        "rangoXp": "1501 - 3000 XP",
+        "imagen": "/assets/nivel3.jpeg"
+      },
+      "recompensa": "1510",
+      "extra": null,
+      "descripcion": "Acércate a 3 mujeres diferentes en un día y hazles un cumplido genuino, específico y sin segundas intenciones. Ej: 'Tu disciplina al entrenar es admirable'. Te retiras inmediatamente después.",
+      "logro": {
+        "nombre": "El Cazador Desinteresado",
+        "descripcion": "Por completar 'El Halcón'",
+        "pegatina": "/assets/logro5.png"
+      }
+    },
+    {
+      "id": "9",
+      "imagen": "loco_controlado.jpg",
+      "nombre": "El Loco Controlado",
+      "nivel": {
+        "numeroNivel": 3,
+        "descripcionNivel": "El Predador",
+        "rangoXp": "1501 - 3000 XP",
+        "imagen": "/assets/nivel3.jpeg"
+      },
+      "recompensa": "1600",
+      "extra": null,
+      "descripcion": "Ve al gym un día con una combinación de ropa tan absurdamente llamativa (pulóver de abuela, short de béisbol viejo, medias disparatadas) que todos te miren. Y entrena con la ferocidad de un animal.",
+      "logro": {
+        "nombre": "El Campeón del Improvisado",
+        "descripcion": "Por completar 'El Loco Controlado'",
+        "pegatina": "/assets/logro6.png"
+      }
+    },
+    {
+      "id": "10",
+      "imagen": "juicio_final.jpg",
+      "nombre": "El Juicio Final",
+      "nivel": {
+        "numeroNivel": 3,
+        "descripcionNivel": "El Predador",
+        "rangoXp": "1501 - 3000 XP",
+        "imagen": "/assets/nivel3.jpeg"
+      },
+      "recompensa": "1800",
+      "extra": {
+        "descripcion": "Si en 'El Juicio Final' ella sonríe genuinamente o acepta, independientemente del resultado posterior",
+        "recompensa": "100"
+      },
+      "descripcion": "Invita a salir a la mujer que consideres la más intimidante e inalcanzable de tu entorno. Usa una frase directa y sin miedo: 'Tu energía es increíble. Deberíamos tomar un café y conversar algún día'. La misión es decirlo. Su respuesta es irrelevante para el éxito de la misión.",
+      "logro": {
+        "nombre": "El que Desafió al Trono",
+        "descripcion": "Por completar 'El Juicio Final'",
+        "pegatina": "/assets/logro7.png"
+      }
+    },
+    {
+      "id": "11",
+      "imagen": "sacrificio_vanidad.jpg",
+      "nombre": "El Sacrificio de la Vanidad",
+      "nivel": {
+        "numeroNivel": 4,
+        "descripcionNivel": "La Leyenda",
+        "rangoXp": "3001 - 5000 XP",
+        "imagen": "/assets/nivel4.jpeg"
+      },
+      "recompensa": "3100",
+      "extra": null,
+      "descripcion": "Rápate la cabeza al cero o déjate crecer una barba salvaje (lo que sea más contrario a tu personalidad) y mantén ese look por un mes, con total indiferencia a las opiniones.",
+      "logro": {
+        "nombre": "El Apóstol de la Autenticidad",
+        "descripcion": "Por completar 'El Sacrificio de la Vanidad'",
+        "pegatina": "/assets/logro8.png"
+      }
+    },
+    {
+      "id": "12",
+      "imagen": "dios_trueno.jpg",
+      "nombre": "El Dios del Trueno",
+      "nivel": {
+        "numeroNivel": 4,
+        "descripcionNivel": "La Leyenda",
+        "rangoXp": "3001 - 5000 XP",
+        "imagen": "/assets/nivel4.jpeg"
+      },
+      "recompensa": "3500",
+      "extra": null,
+      "descripcion": "Entrena al aire libre mientras llueve. No un aguacero peligroso, sino una lluvia constante. Que el agua se mezcle con tu sudor. Siente la naturaleza potenciando tu furia.",
+      "logro": {
+        "nombre": "El que Cabalga la Tormenta",
+        "descripcion": "Por completar 'El Dios del Trueno'",
+        "pegatina": "/assets/logro9.png"
+      }
+    },
+    {
+      "id": "13",
+      "imagen": "exodo.jpg",
+      "nombre": "ÉXODO",
+      "nivel": {
+        "numeroNivel": 4,
+        "descripcionNivel": "La Leyenda",
+        "rangoXp": "3001 - 5000 XP",
+        "imagen": "/assets/nivel4.jpeg"
+      },
+      "recompensa": "4000",
+      "extra": {
+        "descripcion": "Si durante 'ÉXODO' logras una conexión profunda con un extraño que te ofrezca ayuda o compañía sin que tú lo pidas",
+        "recompensa": "150"
+      },
+      "descripcion": "Realiza un viaje solo, aunque sea a una provincia cercana, con el mínimo equipaje. Sobrevive con lo que lleves, conoce gente nueva, regresa cambiado. Esta misión no es física, es del espíritu.",
+      "logro": {
+        "nombre": "PEREGRINO",
+        "descripcion": "Por completar 'ÉXODO'. El logro máximo",
+        "pegatina": "/assets/logro10.png"
+      }
+    },
+    {
+      "id": "14",
+      "imagen": "alcoholicus_prime.jpg",
+      "nombre": "ALCOHOLICUS PRIME",
+      "nivel": {
+        "numeroNivel": 4,
+        "descripcionNivel": "La Leyenda",
+        "rangoXp": "3001 - 5000 XP",
+        "imagen": "/assets/nivel4.jpeg"
+      },
+      "recompensa": "4500",
+      "extra": {
+        "descripcion": "Si, tras el consumo, liberas un eructo estruendoso que hake honor a un motor diesel O si, al terminar, aplastas la lata vacía contra tu propia frente con fuerza titánica",
+        "recompensa": "150"
+      },
+      "descripcion": "En la privacidad de tu círculo de amigos, o un lugar alocado (fiesta), realiza 20 flexiones perfectas. Inmediatamente después, bebe 3 shots (de ron, aguardiente o lo que haya) o una lata de cerveza de un solo trago, sin respirar.",
+      "logro": {
+        "nombre": "DIGNUS EST NOMINE",
+        "descripcion": "Por completar 'ALCOHOLICUS PRIME'",
+        "pegatina": "/assets/logro11.png"
+      }
+    },
+    {
+      "id": "15",
+      "imagen": "loma_semi_desnuda.jpg",
+      "nombre": "La Loma Semi-Desnuda",
+      "nivel": {
+        "numeroNivel": 4,
+        "descripcionNivel": "La Leyenda",
+        "rangoXp": "3001 - 5000 XP",
+        "imagen": "/assets/nivel4.jpeg"
+      },
+      "recompensa": "5000",
+      "extra": {
+        "descripcion": "Si durante el ascenso o en la cima recibes piropos de al menos dos mujeres diferentes O si evidencias que te toman una foto o graban un video (convirtiéndote en un fenómeno viral momentáneo)",
+        "recompensa": "200"
+      },
+      "descripcion": "Escala una loma o colina significativa (como la Loma del Capiro, la de la Juventud o equivalente en tu provincia) vestido solo con calzoncillos y con dos latas de cerveza llenas en la mano. En la cima, realiza 25 flexiones y, al finalizar, tómate ambas latas de un tirón.",
+      "logro": {
+        "nombre": "El Semidiós de la Colina",
+        "descripcion": "Por completar 'La Loma Semi-Desnuda'",
+        "pegatina": "/assets/logro12.png"
+      }
+    }
+]
