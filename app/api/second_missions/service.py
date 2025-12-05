@@ -1,13 +1,14 @@
 from datetime import datetime
-from .schemas import EventResponse, MissionApi, SecondaryMission
 import json
 import re
+from .schemas import EventResponse, MissionApi, SecondaryMission
 from app.database.database import prepare_for_mongo
 from app.core.config import settings
-from huggingface_hub import InferenceClient
+from google import genai
 
-HF_API_KEY = settings.HF_API_KEY
-client = InferenceClient(api_key=HF_API_KEY)
+GOOGLE_API_KEY = settings.GOOGLE_API_KEY
+client = genai.Client(api_key=settings.GOOGLE_API_KEY)
+
 
 async def create_secondary_mission(user_id, db) -> EventResponse:
     try:
@@ -41,59 +42,45 @@ async def create_secondary_mission(user_id, db) -> EventResponse:
         ).to_list(100)
 
         # Construir el prompt
-        prompt_content = f"""
-        Somos un grupo de 5 amigos documentando nuestras aventuras en el gym y el póker. 
-        Genera una misión secundaria creativa y personalizada para esta persona.
-        
-        PERFIL DEL JUGADOR:
+        prompt = f"""
+        Eres un asistente que genera retos semanales personalizados para un grupo de amigos que se motivan en un juego donde cumplen retos y misiones
+        Genera un reto para una persona con las siguientes instrucciones:
+        El reto debe ser:
+        - CONCISO, con un ÚNICO OBJETIVO PRINCIPAL y ACCIONES DIRECTAS. 
+        - Divertido, realista y relacionado con gym,amistad,relaciones y superacion personal
+        - Alcanzable en 1 semana,no debe ser muy complicado de realizar 
+        - Personalizado según su historial,resumen y perfil
+
+        Tendras la siguiente informacion de la persona:
         - Perfil: {perfil}
         - Resumen: {resumen}
-        - Historial de misiones: {history}
-        
-        La misión debe ser:
-        - Divertida, realista y relacionada con gym,póker o amistad
-        - Alcanzable en 1 semana,no deben ser muy complicadas de realizar
-        - Personalizada según su historial y perfil
-        - Incluir objetivos claros y recompensa en el rango de 100-1000
+        - Historial de retos: {history[-3:] if history else 'Sin historial'}
         
         IMPORTANTE: Responde SOLO con un JSON válido con esta estructura exacta:
         {{
-            "nombre": "nombre creativo de la misión",
-            "descripcion": "descripción detallada",
-            "recompensa": "500"
+            "nombre": "nombre corto de el reto",
+            "descripcion": "descripción concisa maximo 200 palabras",
+            "recompensa": "un string con la cantidad de recompensa entre 100 y 1000"
         }}
         """
-        
-        # Llamar a la API
-        """
-        response = client.chat.completions.create(
-            model="mistralai/Mistral-7B-Instruct-v0.3",
-            messages=[
-                {   
-                    "role": "system",
-                    "content": "Eres un asistente creativo que genera misiones secundarias divertidas , realistas y alcanzables para un grupo de amigos que documentan sus experiencias. Siempre respondes con JSON válido."
-                },
-                {
-                    "role": "user", 
-                    "content": prompt_content
-                }
-            ],
-            max_tokens=500,
-            temperature=0.8
+
+        # Llamar a la API de Google Gemini
+        response = client.models.generate_content(
+        model='gemini-2.5-flash',
+        contents=prompt
         )
-        
+
         # Procesar la respuesta
-        if not response.choices or not response.choices[0].message:
+        if not response.text:
             return EventResponse(
                 id="",
-                message="Error: Respuesta vacía de Hugging Face API",
+                message="Error: Respuesta vacía de gemini",
                 success=False,
                 mission_id="",
                 mission_name=""
             )
-            
-        mission_content = response.choices[0].message.content
-
+        mission_content = response.text
+        
         # Limpiar y parsear el JSON
         try:
             # Intentar parsear directamente
@@ -109,19 +96,13 @@ async def create_secondary_mission(user_id, db) -> EventResponse:
             else:
                 raise ValueError("No se encontró JSON en la respuesta")
         
-    
         # Mapear manualmente los campos
         mission_data = {
             "nombre": mission_dict.get("nombre", ""),
             "descripcion": mission_dict.get("descripcion", ""),
             "recompensa": mission_dict.get("recompensa", "100XP") 
         }
-        """
-        mission_data = {
-            "nombre": "La mision secundaria de ejemplo",
-            "descripcion": "esto solo es un ejemplo",
-            "recompensa": "500" 
-        }
+        
         # Validar con Pydantic
         try:
             mission_api_obj = MissionApi(**mission_data)
@@ -158,7 +139,7 @@ async def create_secondary_mission(user_id, db) -> EventResponse:
         
     except Exception as e:
         return EventResponse(
-            message=f"Error en API de Hugging Face: {str(e)}",
+            message=f"Error en API de gemini: {str(e)}",
             success=False,
             mission_id="",
             mission_name=""

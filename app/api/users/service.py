@@ -41,3 +41,26 @@ async def get_current_user(request: Request, db=Depends(get_database)) -> User:
         return User(**parse_from_mongo(user))
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+async def get_current_user_id(request: Request, db=Depends(get_database)) -> str:
+    try:
+        token = request.cookies.get("access_token")
+        if not token:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+        # 2) (opcional) verificar CSRF: comparar header 'x-csrf-token' con cookie 'csrf_token'
+        # 3) decodificar token y recuperar user
+        payload = decode_access_token(token)
+        # payload = {"user_id": 123, "exp": 1234567890, ...}
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+        user = await get_user_by_id(user_id,db)
+        if user is None:
+            raise HTTPException(status_code=401, detail="User not found")
+        
+        # convertir a modelo público (sin hashed_password) y extraer id antes de retornar
+        user_obj = User(**parse_from_mongo(user))
+        return user_obj.id
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
