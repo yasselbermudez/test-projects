@@ -18,16 +18,15 @@ async def create_assignments(
     person_id: str,
     user_name: str,
     db,
-    mission_data: Optional[Mission] = None
 ) -> EventResponse:
     try:
-        if not mission_data:
-            mission_data = Mission(
-                mission_id="1",
-                mission_name=missions[0]["nombre"],  # Acceder como diccionario
-                creation_date=datetime.now(),
-                status = MissionStatus.ACTIVE
-            )
+        
+        mission_data = Mission(
+            mission_id="1",
+            mission_name=missions[0]["nombre"],  # Acceder como diccionario
+            creation_date=datetime.now(),
+            status = MissionStatus.ACTIVE
+        )
 
         assignment = Assignments(
             person_id=person_id,

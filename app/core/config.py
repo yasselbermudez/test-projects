@@ -1,5 +1,3 @@
-from typing import List
-from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -31,8 +29,8 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: str = "http://localhost:5173"
 
     # api key
-    HF_API_KEY: str
-
+    GOOGLE_API_KEY: str
+    
     """
     @field_validator('BACKEND_CORS_ORIGINS', mode='before')
     @classmethod
