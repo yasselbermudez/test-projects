@@ -1,6 +1,6 @@
 from datetime import datetime
 from fastapi import  HTTPException
-from .schemas import Group,EventResponse,Member, UpdateGroup,UpdateMembers,CreateGroup
+from .schemas import Group,Member, UpdateGroup,UpdateMembers,CreateGroup
 
 async def create_group(group_data: CreateGroup, db):
     try:

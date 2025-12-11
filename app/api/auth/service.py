@@ -1,7 +1,5 @@
 from typing import Optional
-import jwt
-from fastapi.security import HTTPAuthorizationCredentials
-from app.core.security import get_password_hash, verify_password, create_access_token,decode_access_token
+from app.core.security import get_password_hash, verify_password, create_access_token
 from fastapi import HTTPException
 from .schemas import UserCreate, UserLogin, User,UserInDb
 from app.database.database import prepare_for_mongo, parse_from_mongo

@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     DB_NAME: str = "online_store_db"
 
     # CORS
-    BACKEND_CORS_ORIGINS: str = "http://localhost:5173"
+    BACKEND_CORS_ORIGINS: str = "http://localhost:5174"
 
     # api key
     GOOGLE_API_KEY: str

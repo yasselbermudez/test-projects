@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from app.api.users.service import get_current_user
+from app.api.users.service import get_current_user, get_current_user_id
 from app.database.database import get_database
 from .schemas import Profile, ProfileUpdate,InitProfile
 from .service import initialize_profile_data,initialize_summary_data
@@ -18,8 +18,8 @@ async def get_profiles_data(group_id:str,db=Depends(get_database)):
     return [Profile(**profile) for profile in profiles]
 
 
-@router.post("/{user_id}")
-async def initialize_data(user_id:str,profile_data:InitProfile,db=Depends(get_database),current_user = Depends(get_current_user)):
+@router.post("/")
+async def initialize_data(profile_data:InitProfile,user_id:str=Depends(get_current_user_id),db=Depends(get_database),current_user = Depends(get_current_user)):
     
     profile = await initialize_profile_data(user_id,profile_data.email,db)
     sumary = await initialize_summary_data(user_id,profile_data.email,db)
@@ -35,8 +35,8 @@ async def get_profile(user_id: str,db=Depends(get_database)) -> Profile:
     return result
 
 
-@router.put("/{user_id}")
-async def update_profile_info(user_id: str, profile_info: ProfileUpdate, db=Depends(get_database)):
+@router.put("/")
+async def update_profile_info(profile_info: ProfileUpdate,user_id:str=Depends(get_current_user_id), db=Depends(get_database)):
     
     update_data = profile_info.dict(exclude_none=True)
     
