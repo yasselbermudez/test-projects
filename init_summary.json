@@ -23,14 +23,14 @@
         "trayectoria_vital_situacion_actual": {
             "profesion": "",
             "trayectoria_academica_laboral": "Criado por la mama y la abuela , tubo problemas familiares con su padre pero actualmente estan resueltos y son mas unidos",
-            "situacion_sentimental": "Se caso en el ipvce con Gavi una muchacha buena con la que duro 5 anos felices pero tristemente no termino como el hubiera querido",
+            "situacion_sentimental": "Se caso en el ipvce con Gavi una muchacha buena con la que duro 5 años felices pero tristemente no termino como el hubiera querido",
             "situacion_economica": "Inestable. se mantiene luchando e inventando (actualmente criando puercos entre otros inventos), tubo un negocio exitoso de vender ropa pero por malentendidos con su ex que formaba parte de el negocio se cayo mucho y no ha logrado recuperarlo",
             "vivienda": "Vive con su madre y abuela"
         },
         "gustos_red_social_estilo_vida": {
             "gustos": "Le gusta mucho el deporte , jugar baloncesto y cualquier otro deporte",
-            "red_social": "Tiene un grupo de amigos del IPVCE muy fuerte y trascendental. Sus amistades actuales son Angel Liban,Yassel, Lázaro y Luis Angel",
-            "estilo_vida": "Su vida ha madurado. De una juventud con salidas y borracheras ahora esta sentrado en ir al gym y comer bien"
+            "red_social": "Tiene un grupo de amigos del IPVCE muy fuerte y trascendental. Sus amistades actuales son Angel Livan,Yassel, Lázaro y Luis Angel",
+            "estilo_vida": "Su vida ha madurado. De una juventud con salidas y borracheras ahora esta centrado en ir al gym y comer bien"
         },
         "perfil_sintetizado": ""
     },
@@ -142,33 +142,33 @@
         "email":"rodriguezrodriguezm163@gmail.com",
         "identidad_basica": {
             "nombre": "Marcos",
-            "alias": "",
-            "nacimiento": "",
-            "origen": "Nació en Manicaragua"
+            "alias": "Marquitos,Tarru,El lindo",
+            "nacimiento": "2001",
+            "origen": "Nació en Santa Clara,pero originario de Manicaragua(El Hollo) un pueblo rural que no sale en el mapa,en el seno de una familia humilde "
         },
         "caracteristicas_fisicas": {
-            "estatura": "",
-            "peso": "",
-            "apariencia": "",
-            "condicion_fisica": ""
+            "estatura": "173 cm",
+            "peso": "60 kg",
+            "apariencia": "trigueno delgado de ojos marrones con barbita,en su mente se siente atractivo ",
+            "condicion_fisica": "siempre delgado ,anteriormente tubo mejor condicion cuando entrenaba, en estos momentos comienza en el gym "
         },
         "personalidad_psicologia": {
-            "caracter_base": "",
-            "alter_ego": "",
-            "filosofia_vida": "",
-            "miedos_profundos": ""
+            "caracter_base": "timido con las personas extranas, introvertido, y le gusta tener su espacio",
+            "alter_ego": "Le apasionan los videojuegos ,el anime y tiene debilidad con las mujeres sagueras(Municipio Sagua La Grande)",
+            "filosofia_vida": "Un dia tras otro, enfocado en su futuro",
+            "miedos_profundos": "Le teme a la soledad, a no encontrar el amor verdadero y a no alcanzar sus metas"
         },
         "trayectoria_vital_situacion_actual": {
-            "profesion": "",
-            "situacion_economica": "",
-            "situacion_sentimental_estado": "",
-            "situacion_sentimental_actitud": "",
-            "situacion_sentimental_estado_anímico": ""
+            "profesion": "Graduado de Licenciatura en Economia, se dedica a hacer sorbetos y venta de cigarros",
+            "situacion_economica": "Mas pobre que las personas de africa ",
+            "situacion_sentimental_estado": "Actualmente soltero",
+            "situacion_sentimental_actitud": "Listo para llenarle el tanque a cualquier menor",
+            "situacion_sentimental_estado_anímico": "Tremendo queso"
         },
         "gustos_red_social_estilo_vida": {
-            "gustos": "",
-            "vicios": "",
-            "habilidades_sociales": ""
+            "gustos": "Juagr videojuegos, las mujeres ( si son menores de 18 años mejor) ",
+            "vicios": "Es una persona sana sin vicios",
+            "habilidades_sociales": "Pocas habilidades comunicativas"
         },
         "perfil_sintetizado": ""
     }

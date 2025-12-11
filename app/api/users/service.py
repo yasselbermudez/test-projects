@@ -1,8 +1,6 @@
 from typing import Optional
 import jwt
 from app.core.security import decode_access_token
-
-from fastapi.security import OAuth2PasswordBearer
 from .schemas import User
 from app.database.database import parse_from_mongo, get_database
 

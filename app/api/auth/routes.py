@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Cookie, Depends, Request, status, Response
-from .schemas import UserCreate, UserLogin, Token, User
+from fastapi import APIRouter, Depends, status, Response
+from .schemas import UserCreate, UserLogin, User
 from . import service
 from app.database.database import get_database
 
