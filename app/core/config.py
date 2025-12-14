@@ -23,10 +23,10 @@ class Settings(BaseSettings):
     
     # Database
     DATABASE_URL: str
-    DB_NAME: str = "online_store_db"
+    DB_NAME: str = "iron_brothers_db"
 
     # CORS
-    BACKEND_CORS_ORIGINS: str = "http://localhost:5174"
+    BACKEND_CORS_ORIGINS: str = "http://localhost:5173"
 
     # api key
     GOOGLE_API_KEY: str
