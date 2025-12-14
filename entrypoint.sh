@@ -1,7 +1,7 @@
+#!/bin/bash
+
 #El script entrypoint.sh expande la variable $PORT 
 #correctamente antes de ejecutar uvicorn. 
-
-#!/bin/bash
 
 # Si la variable PORT no está definida, usa 8000 por defecto
 PORT=${PORT:-8000}
