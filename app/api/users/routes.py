@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.database.database import get_database
 from .schemas import User,UpdateUser
-from .service import get_current_user
+from .service import get_current_user, get_current_user_id, update_user_info
 
 router = APIRouter()
 
@@ -10,21 +10,7 @@ router = APIRouter()
 async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
-@router.put("/{user_id}")
-async def update_user_info(user_id: str, user_info: UpdateUser, db=Depends(get_database)):
-    
-    update_data = user_info.dict(exclude_none=True)
-    
-    try:
-        result = await db.users.update_one(
-            {"id": user_id},  # Buscar por el campo id
-            {"$set": update_data}
-        )
-    except Exception as e:
-        print(f"Error durante la actualizacion: {type(e).__name__}: {e}")
-        raise HTTPException(status_code=400, detail="Update error")
-    
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail=f"User not found")
-    
-    return {"message": "User info updated successfully"}
+@router.put("/")
+async def update_user(user_info: UpdateUser,user_id: str=Depends(get_current_user_id), db=Depends(get_database)):
+    result = await update_user_info(user_id,user_info,db)
+    return result
