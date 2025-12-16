@@ -417,7 +417,7 @@ async def archive_result_mission(user_id:str,current_mission:dict,mission_field:
     # preparamos la mission para archivarla en un envento de la historia
     try:
         current_mission_obj:Mission = Mission(**current_mission)
-        
+
         if mission_field==MissionType.MAIN:
             mission_details = await db.missions.find_one({"id":current_mission_obj.mission_id})
             logro = mission_details["logro"]
@@ -434,7 +434,7 @@ async def archive_result_mission(user_id:str,current_mission:dict,mission_field:
             status=status_result,
             logro_name=logro_name
         )
-
+        
         await create_event(event_data,db)
         return True
     except Exception as e:

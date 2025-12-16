@@ -31,7 +31,7 @@ async def Update_assignments_missions(type:MissionType,user_id:str=Depends(get_c
     result = await update_assignments_missions(user_id,type,db)
     return result
 
-@router.put("{user_id}/missions/votes",response_model = EventResponse)
+@router.put("/{user_id}/missions/votes",response_model = EventResponse)
 async def Update_assignments_missions_params_vote(user_id:str,update_data: ParamsUpdateVote,voter_id:str=Depends(get_current_user_id),db=Depends(get_database)):
     result = await missions_params_vote(user_id,voter_id,update_data,db)
     return result

@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
-from app.api.users.service import get_current_user, get_current_user_id
+from app.api.assignments.services import create_assignments
+from app.api.auth.schemas import User
+from app.api.users.service import get_current_user, get_current_user_id, update_user_info
 from app.database.database import get_database
 from .schemas import Profile, ProfileUpdate,InitProfile
 from .service import initialize_profile_data,initialize_summary_data
@@ -19,11 +21,13 @@ async def get_profiles_data(group_id:str,db=Depends(get_database)):
 
 
 @router.post("/")
-async def initialize_data(profile_data:InitProfile,user_id:str=Depends(get_current_user_id),db=Depends(get_database),current_user = Depends(get_current_user)):
-    
-    profile = await initialize_profile_data(user_id,profile_data.email,db)
-    sumary = await initialize_summary_data(user_id,profile_data.email,db)
-    
+async def initialize_data(user:User=Depends(get_current_user),db=Depends(get_database)):
+    profile = await initialize_profile_data(user.id,user.email,db)
+    sumary = await initialize_summary_data(user.id,user.email,db)
+    active_user_result = await update_user_info(user.id,{"is_active":True},db)
+    create_assignments_result = await create_assignments(user.id,user.name,db)
+    if not create_assignments_result.success: 
+        raise HTTPException(status_code=400, detail="Error creating assignments")
     return {"message": f"{profile} and {sumary}"}
  
 
