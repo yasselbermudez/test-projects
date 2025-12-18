@@ -1,5 +1,4 @@
-from typing import Optional
-from fastapi import HTTPException
+from fastapi import HTTPException,status
 from app.database.database import prepare_for_mongo
 from .schemas import AssignmentsMissionsResponse,EventResponse,Mission,Assignments, MissionType, ParamsUpdate,MissionStatus, ParamsUpdateVote
 from datetime import datetime
@@ -10,6 +9,9 @@ from ..history.service import create_event
 
 from ..second_missions.service import create_secondary_mission
 from ..second_missions.schemas import EventResponse as CreateMissionResponse
+
+import logging
+logger = logging.getLogger(__name__)
 
 with open('./init_missions.json', 'r', encoding='utf-8') as f:
     missions = json.load(f)
@@ -39,18 +41,24 @@ async def create_assignments(
         assignment_doc = prepare_for_mongo(assignment.dict())
         result = await db.assignments.insert_one(assignment_doc)
         
-        return EventResponse(
-                id=str(result.inserted_id),
-                message="Assignment created successfully",
-                success=True
+        if not result.inserted_id:
+            logger.error(f"Error al crear asignaciones para {person_id}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error al crear asignaciones"
             )
-    
+        
+        logger.info(f"Asignaciones creadas para usuario {person_id}")
+        return {"assignment_id": str(result.inserted_id)}
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        return EventResponse(
-                id="",
-                message=f"Error creando la asignacion: {str(e)}",
-                success=False
-            )
+        logger.error(f"Error en create_assignments_simple: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error interno al crear asignaciones"
+        )
 
 # eliminar sustituir o agregar una mision a la asignacion
 async def update_assignments_missions(

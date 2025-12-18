@@ -3,6 +3,9 @@ import jwt
 from app.core.security import decode_access_token
 from .schemas import UpdateUser, User
 from app.database.database import parse_from_mongo, get_database
+import logging
+
+logger = logging.getLogger(__name__)
 
 async def get_user_by_id(user_id: str,db) -> Optional[dict]:
     return await db.users.find_one({"id": user_id})
@@ -55,19 +58,30 @@ async def get_current_user_id(request: Request, db=Depends(get_database)) -> str
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
     
-async def update_user_info(user_id: str, user_info: UpdateUser, db) -> dict:
+async def update_user_info(user_id: str, user_info: UpdateUser, db):
     update_data = user_info.dict(exclude_none=True)
-    
+
     try:
         result = await db.users.update_one(
             {"id": user_id}, 
             {"$set": update_data}
         )
+        
+        if result.matched_count == 0:
+            logger.warning(f"Usuario {user_id} no encontrado para actualizar")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Usuario no encontrado"
+            )
+        
+        logger.info(f"Usuario {user_id} actualizado exitosamente")
+        return {"success": True}
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Error durante la actualizacion: {type(e).__name__}: {e}")
-        raise HTTPException(status_code=400, detail="Update error")
-    
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail=f"User not found")
-    
-    return {"message": "User info updated successfully"}
+        logger.error(f"Error en update_user_info: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error interno al actualizar usuario"
+        )
