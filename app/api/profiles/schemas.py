@@ -2,8 +2,9 @@ import uuid
 from pydantic import BaseModel, Field
 from typing import Dict, Optional
 
-class InitProfile(BaseModel):
-    email: str
+class EventResponse(BaseModel):
+    message: str
+    success: bool
 
 class Deuda(BaseModel):
     tipo: str
@@ -17,22 +18,21 @@ class Pesos(BaseModel):
     biceps: str
 
 class Profile(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     email: str
     user_id: str
     edad: str
-    apodo: str  # updateable
-    titulo: str # te lo asigna la pagina
+    estatura: str 
     peso_corporal: str # updateable
-    altura: str 
-    aura: str = "0" # te lo asigna la pagina
-    deuda: Deuda # te lo asigna la pagina
     pesos: Pesos # updateable
-    mujeres: str # updateable
-    frase: str # updateable
-    objetivo: str # updateable
-    img: str
+    apodo: str = "" # updateable
+    titulo: str = "" # te lo asigna la pagina
+    aura: str = "0" # te lo asigna la pagina
+    deuda: Optional[Deuda] = None # te lo asigna la pagina
+    mujeres: str = "" # updateable
+    frase: str = ""# updateable
+    objetivo: str = "" # updateable
+    img: str = ""
 
 class ProfileUpdate(BaseModel):
     apodo: Optional[str] = None
@@ -41,6 +41,17 @@ class ProfileUpdate(BaseModel):
     mujeres: Optional[str] = None
     frase: Optional[str] = None
     objetivo: Optional[str] = None    
+
+class ProfileInit(BaseModel):
+    edad: str
+    peso_corporal: str
+    estatura: str
+    pesos: Pesos
+    frase: Optional[str] = None
+    apodo: Optional[str] = None
+    objetivo: Optional[str] = None
+    summary: Optional[str] = None
+
 
 class Summary(BaseModel):
     user_id: str

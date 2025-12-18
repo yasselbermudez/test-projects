@@ -3,7 +3,7 @@ version: '3.8'  # Usa una versión compatible
 services:
   mongodb:  # Nombre del servicio
     image: mongo:latest  # Usa una versión específica como "mongo:4.2.1" para mayor estabilidad:cite[6]:cite[8]
-    container_name: mi_mongodb_for_look_at_the_aesthetics  # Nombre del contenedor
+    container_name: mi_mongodb_for_iron-brothers  # Nombre del contenedor
     restart: always  # Para que se reinicie automáticamente si falla
     ports:
       - "27017:27017"  # MAPEO DE PUERTOS: puerto_de_tu_equipo:puerto_del_contenedor

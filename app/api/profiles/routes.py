@@ -1,10 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException,status
 from app.api.assignments.services import create_assignments
 from app.api.auth.schemas import User
+from app.api.users.schemas import UpdateUser
 from app.api.users.service import get_current_user, get_current_user_id, update_user_info
 from app.database.database import get_database
-from .schemas import Profile, ProfileUpdate,InitProfile
-from .service import initialize_profile_data,initialize_summary_data
+from .schemas import Profile, ProfileInit, ProfileUpdate
+from .service import initialize_profile_data
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -20,16 +24,37 @@ async def get_profiles_data(group_id:str,db=Depends(get_database)):
     return [Profile(**profile) for profile in profiles]
 
 
-@router.post("/")
-async def initialize_data(user:User=Depends(get_current_user),db=Depends(get_database)):
-    profile = await initialize_profile_data(user.id,user.email,db)
-    sumary = await initialize_summary_data(user.id,user.email,db)
-    active_user_result = await update_user_info(user.id,{"is_active":True},db)
-    create_assignments_result = await create_assignments(user.id,user.name,db)
-    if not create_assignments_result.success: 
-        raise HTTPException(status_code=400, detail="Error creating assignments")
-    return {"message": f"{profile} and {sumary}"}
- 
+@router.post("/", status_code=status.HTTP_201_CREATED)
+async def initialize_profile(
+    profile_init_data: ProfileInit,
+    user: User = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    
+    try:
+        await initialize_profile_data(user.id, user.email, user.name, profile_init_data, db)
+        logger.info(f"Perfil inicializado para usuario {user.email}")
+        
+        await update_user_info(user.id, UpdateUser(is_active=True), db)
+        logger.info(f"Usuario {user.email} marcado como activo")
+        
+        await create_assignments(user.id, user.name, db)
+        logger.info(f"Tareas iniciales creadas para usuario {user.email}")
+        
+        return {
+            "message": f"Perfil para {user.name} inicializado exitosamente",
+            "success": True
+        }
+        
+    except HTTPException:
+        # Re-lanzar excepciones HTTP que ya vienen de las funciones
+        raise
+    except Exception as e:
+        logger.error(f"Error no manejado en initialize_profile: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error interno del servidor"
+        )
 
 @router.get("/{user_id}",response_model = Profile)
 async def get_profile(user_id: str,db=Depends(get_database)) -> Profile:
@@ -39,7 +64,7 @@ async def get_profile(user_id: str,db=Depends(get_database)) -> Profile:
     return result
 
 
-@router.put("/")
+@router.put("/") 
 async def update_profile_info(profile_info: ProfileUpdate,user_id:str=Depends(get_current_user_id), db=Depends(get_database)):
     
     update_data = profile_info.dict(exclude_none=True)
@@ -50,7 +75,7 @@ async def update_profile_info(profile_info: ProfileUpdate,user_id:str=Depends(ge
             {"$set": update_data}
         )
     except Exception as e:
-        print(f"Error durante la actualizacion: {type(e).__name__}: {e}")
+        logger.error(f"Error durante la actualizacion: {type(e).__name__}: {e}")
         raise HTTPException(status_code=400, detail="Update error")
     
     if result.matched_count == 0:
