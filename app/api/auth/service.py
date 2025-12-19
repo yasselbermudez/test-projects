@@ -1,6 +1,6 @@
 from typing import Optional
 from app.core.security import get_password_hash, verify_password, create_access_token
-from fastapi import HTTPException
+from fastapi import HTTPException,status
 from .schemas import UserCreate, UserLogin, User,UserInDb
 from app.database.database import prepare_for_mongo, parse_from_mongo
 
@@ -24,11 +24,11 @@ async def create_user(user_data:UserCreate,db) -> dict:
     existing_user = await find_user_by_email(user_data.email,db)
     
     if existing_user :
-        raise HTTPException(status_code=400,detail="User email already registered")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail="User email already registered")
     
     valid_user = await validate_user_by_email(user_data.email,db)
     if not valid_user : 
-        raise HTTPException(status_code=400,detail="Email not valid")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email")
 
     hashed_password=get_password_hash(user_data.password)
     
@@ -52,13 +52,13 @@ async def authenticate_user(login_data:UserLogin,db) -> dict:
     
     existing_user = await find_user_by_email(login_data.email,db)
     if not existing_user:
-        raise HTTPException(status_code=404, detail="User not existing")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     
     hashed_password = existing_user.get('hashed_password')
     is_verify = verify_password(login_data.password, hashed_password)
 
     if not is_verify:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
     user_obj = UserInDb(**parse_from_mongo(existing_user))
 
