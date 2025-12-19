@@ -1,7 +1,10 @@
-from fastapi import APIRouter, Depends, status, Response
+from fastapi import APIRouter, Depends, status, Response,HTTPException
 from .schemas import UserCreate, UserLogin, User
 from . import service
 from app.database.database import get_database
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -25,22 +28,23 @@ async def register_user(user_data: UserCreate, response:Response, db=Depends(get
 
 @router.post("/login", response_model=User)
 async def login_user(login_data: UserLogin,response: Response, db=Depends(get_database)):
+        
     result = await service.authenticate_user(login_data,db)
     user = result.get("user")
     token = result.get("access_token")
     response.set_cookie(
-        key="access_token",
-        value=token,
+        key="access_token",            value=token,
         httponly=True,
         secure=False, # poner True en producción (HTTPS)
         samesite="lax",
         max_age=TOKEN_SECONDS_EXP,
         path="/"
-        )
+    )
     # Opcional: crear y devolver un CSRF token que el cliente debe enviar en headers
     # csrf_token = generate_csrf()  # función que genere token aleatorio
     # response.set_cookie("csrf_token", csrf_token, httponly=False, secure=False, samesite="lax")
     return user
+    
 
 @router.post("/logout", status_code=204)
 async def logout(response: Response):
