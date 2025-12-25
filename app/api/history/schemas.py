@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel, Field
 
 class Event(BaseModel):
@@ -16,3 +16,7 @@ class EventResponse(BaseModel):
     id: str
     message: str
     success: bool
+
+class History(BaseModel):
+    user_name:str
+    events:List[Event]

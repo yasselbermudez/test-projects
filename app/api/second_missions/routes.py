@@ -7,7 +7,7 @@ from .service import create_secondary_mission
 router = APIRouter()
 
 @router.get("/",response_model = list[SecondaryMission])
-async def get_missions(db=Depends(get_database)):
+async def get_missions(user_id:str=Depends(get_current_user_id),db=Depends(get_database)):
     missions = await db.secondary.find().to_list(100)
     return [SecondaryMission(**mission) for mission in missions]
 
