@@ -7,14 +7,14 @@ from .services import get_assignments_missions,create_assignments,update_assignm
 
 router = APIRouter()
 
-@router.get("/{user_id}",response_model = Assignments)
-async def get_assignments(user_id:str,db=Depends(get_database)):
-    assignments = await db.assignments.find_one({"person_id":user_id})
+@router.get("/{person_id}",response_model = Assignments)
+async def get_assignments(person_id:str,db=Depends(get_database),user_id:str=Depends(get_current_user_id)):
+    assignments = await db.assignments.find_one({"person_id":person_id})
     return Assignments(**assignments)
 
-@router.get("/{user_id}/missions",response_model = AssignmentsMissionsResponse)
-async def get_assignments_all_mission(user_id:str,db=Depends(get_database)):
-    return await get_assignments_missions(user_id,db)
+@router.get("/{person_id}/missions",response_model = AssignmentsMissionsResponse)
+async def get_assignments_all_mission(person_id:str,db=Depends(get_database),user_id:str=Depends(get_current_user_id)):
+    return await get_assignments_missions(person_id,db)
 
 @router.post("/",response_model = EventResponse)
 async def create_new_assignments(user:User=Depends(get_current_user),db=Depends(get_database)):

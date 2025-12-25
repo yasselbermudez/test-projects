@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.get("/groups/{group_id}",response_model = list[Profile])
-async def get_profiles_data(group_id:str,db=Depends(get_database)):
+async def get_profiles_data(group_id:str,db=Depends(get_database),user_id:str=Depends(get_current_user_id)):
     group = await db.groups.find_one({"id":group_id})
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
@@ -56,8 +56,8 @@ async def initialize_profile(
             detail="Error interno del servidor"
         )
 
-@router.get("/{user_id}",response_model = Profile)
-async def get_profile(user_id: str,db=Depends(get_database)) -> Profile:
+@router.get("/",response_model = Profile)
+async def get_profile(user_id:str=Depends(get_current_user_id),db=Depends(get_database)) -> Profile:
     result = await db.profiles.find_one({"user_id": user_id})
     if not result:
         return HTTPException(status_code=404,detail="Profile not found")
