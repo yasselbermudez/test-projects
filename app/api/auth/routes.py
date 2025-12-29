@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status, Response,HTTPException
+from fastapi import APIRouter, Depends, status, Response
 from .schemas import UserCreate, UserLogin, User
 from . import service
 from app.database.database import get_database
@@ -26,14 +26,15 @@ async def register_user(user_data: UserCreate, response:Response, db=Depends(get
     )
     return user 
 
-@router.post("/login", response_model=User)
+@router.post("/login",response_model=User)
 async def login_user(login_data: UserLogin,response: Response, db=Depends(get_database)):
         
     result = await service.authenticate_user(login_data,db)
     user = result.get("user")
     token = result.get("access_token")
     response.set_cookie(
-        key="access_token",            value=token,
+        key="access_token",            
+        value=token,
         httponly=True,
         secure=False, # poner True en producción (HTTPS)
         samesite="lax",
@@ -46,7 +47,7 @@ async def login_user(login_data: UserLogin,response: Response, db=Depends(get_da
     return user
     
 
-@router.post("/logout", status_code=204)
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(response: Response):
     # Borra la cookie en el cliente
     response.delete_cookie("access_token", path="/")

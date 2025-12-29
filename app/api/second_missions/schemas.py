@@ -19,12 +19,6 @@ class SecondaryMission(BaseModel):
     is_active: bool = True
     created: datetime = Field(default_factory=datetime.now)
 
-class EventResponse(BaseModel):
-    message: str
-    success: bool
-    mission_id: str
-    mission_name: str
-
 class MissionApi(BaseModel):
     nombre:str
     descripcion:str

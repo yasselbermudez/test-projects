@@ -16,6 +16,7 @@ async def initialize_profile_data(
     
     try:
         existing_profile = await db.profiles.find_one({"user_id": user_id})
+        
         if existing_profile:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,

@@ -55,32 +55,31 @@ async def get_current_user_id(request: Request, db=Depends(get_database)) -> str
             raise HTTPException(status_code=401, detail="Invalid token")
         
         return user_id
+    except HTTPException:
+        raise
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
     
-async def update_user_info(user_id: str, user_info: UpdateUser, db):
-    update_data = user_info.dict(exclude_none=True)
-
+async def update_user_info(user: User, user_info: UpdateUser, db)->User:
     try:
+        update_data = user_info.dict(exclude_none=True)
+
         result = await db.users.update_one(
-            {"id": user_id}, 
+            {"id": user.id}, 
             {"$set": update_data}
         )
         
-        if result.matched_count == 0:
-            logger.warning(f"Usuario {user_id} no encontrado para actualizar")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Usuario no encontrado"
-            )
+        if result.modified_count > 0:
+            logger.info(f"Usuario {user.id} actualizado exitosamente")
+            user_response = await db.users.find_one({"id": user.id})
+        else:
+            user_response = user
+            logger.info(f"No se realizaron cambios para el usuario {user.id} ")
+            
+        return user_response
         
-        logger.info(f"Usuario {user_id} actualizado exitosamente")
-        return {"success": True}
-        
-    except HTTPException:
-        raise
     except Exception as e:
-        logger.error(f"Error en update_user_info: {str(e)}")
+        logger.error(f"Error interno al actualizar usuario: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error interno al actualizar usuario"

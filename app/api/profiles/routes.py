@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException,status
-from app.api.assignments.services import create_assignments
+from app.api.assignments.service import create_assignments
 from app.api.auth.schemas import User
 from app.api.users.schemas import UpdateUser
 from app.api.users.service import get_current_user, get_current_user_id, update_user_info
@@ -47,7 +47,6 @@ async def initialize_profile(
         }
         
     except HTTPException:
-        # Re-lanzar excepciones HTTP que ya vienen de las funciones
         raise
     except Exception as e:
         logger.error(f"Error no manejado en initialize_profile: {str(e)}")
@@ -64,22 +63,34 @@ async def get_profile(user_id:str=Depends(get_current_user_id),db=Depends(get_da
     return result
 
 
-@router.put("/") 
+@router.put("/",response_model=Profile) 
 async def update_profile_info(profile_info: ProfileUpdate,user_id:str=Depends(get_current_user_id), db=Depends(get_database)):
-    
-    update_data = profile_info.dict(exclude_none=True)
-    
     try:
+        update_data = profile_info.dict(exclude_none=True)
+        
+        existing_profile = await db.profiles.find_one({"user_id": user_id})
+        
+        if not existing_profile:
+            return HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Profile not found")
+
         result = await db.profiles.update_one(
             {"user_id": user_id}, 
             {"$set": update_data}
         )
+
+        if result.modified_count > 0:
+            logger.info(f"perfil del usuario:{user_id} actualizado exitosamente")
+            profile_response = db.profiles.find_one({"user_id": user_id})
+        else:
+            logger.info(f"No se realizaron cambios en el perfil del usuario {user_id}")
+            profile_response = existing_profile
+        
+        return profile_response
+    
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error durante la actualizacion: {type(e).__name__}: {e}")
-        raise HTTPException(status_code=400, detail="Update error")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Update error")
     
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail=f"Profile with name '{user_id}' not found")
-    
-    return {"message": "profile info updated successfully"}
 
