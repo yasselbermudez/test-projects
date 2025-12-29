@@ -37,7 +37,7 @@ app.include_router(api_router,prefix=settings.API_V1_STR)
 # Check healty
 @app.get("/")
 def root():
-    return {"message":"Online Store API is runing"}
+    return {"message":"Iron Brothers API is runing"}
 
 @app.on_event("startup")
 async def startup_event():

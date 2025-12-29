@@ -1,19 +1,23 @@
 from datetime import datetime
 import json
 import re
-from .schemas import EventResponse, MissionApi, SecondaryMission
+
+from fastapi import HTTPException,status
+from .schemas import MissionApi, SecondaryMission
 from app.database.database import prepare_for_mongo
 from app.core.config import settings
 from google import genai
 
+import logging
+logger = logging.getLogger(__name__)
+
 GOOGLE_API_KEY = settings.GOOGLE_API_KEY
 client = genai.Client(api_key=settings.GOOGLE_API_KEY)
 
-
-async def create_secondary_mission(user_id, db) -> EventResponse:
+async def create_secondary_mission(user_id, db) -> SecondaryMission:
     try:
         # Obtener datos del usuario
-        perfil = await db.profiles.find_one(
+        profile = await db.profiles.find_one(
             {"user_id": user_id},
             {   
                 "name": 1, "apodo": 1, "peso_corporal": 1,
@@ -22,14 +26,8 @@ async def create_secondary_mission(user_id, db) -> EventResponse:
         )
         
         # Verificar que se encontró el perfil
-        if not perfil:
-            return EventResponse(
-                id="",
-                message="No se encontró el perfil del usuario",
-                success=False,
-                mission_id="",
-                mission_name=""
-            )
+        if not profile:
+            return HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Profile not found")
         
         resumen = await db.summary.find_one(
             {"user_id": user_id},
@@ -52,7 +50,7 @@ async def create_secondary_mission(user_id, db) -> EventResponse:
         - Personalizado según su historial,resumen y perfil
 
         Tendras la siguiente informacion de la persona:
-        - Perfil: {perfil}
+        - Perfil: {profile}
         - Resumen: {resumen}
         - Historial de retos: {history[-3:] if history else 'Sin historial'}
         
@@ -65,20 +63,19 @@ async def create_secondary_mission(user_id, db) -> EventResponse:
         """
 
         # Llamar a la API de Google Gemini
-        response = client.models.generate_content(
-        model='gemini-2.5-flash',
-        contents=prompt
-        )
+        try:
+            response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt
+            )
+        except Exception as e:
+            logger.error(f"Error el llamar a la api de gemini: {str(e)}")
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,detail="Error el llamar a la api de gemini")
 
         # Procesar la respuesta
         if not response.text:
-            return EventResponse(
-                id="",
-                message="Error: Respuesta vacía de gemini",
-                success=False,
-                mission_id="",
-                mission_name=""
-            )
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,detail="Respuesta vacía de gemini")
+
         mission_content = response.text
         
         # Limpiar y parsear el JSON
@@ -96,25 +93,21 @@ async def create_secondary_mission(user_id, db) -> EventResponse:
             else:
                 raise ValueError("No se encontró JSON en la respuesta")
         
-        # Mapear manualmente los campos
-        mission_data = {
-            "nombre": mission_dict.get("nombre", ""),
-            "descripcion": mission_dict.get("descripcion", ""),
-            "recompensa": mission_dict.get("recompensa", "100XP") 
-        }
         
-        # Validar con Pydantic
         try:
+            # Mapear manualmente los campos
+            mission_data = {
+                "nombre": mission_dict.get("nombre", ""),
+                "descripcion": mission_dict.get("descripcion", ""),
+                "recompensa": mission_dict.get("recompensa", "100XP") 
+            }
+        
+            # Validar con Pydantic
             mission_api_obj = MissionApi(**mission_data)
         except Exception as e:
-            return EventResponse(
-                id="",
-                message=f"Error validando datos de la misión: {str(e)}",
-                success=False,
-                mission_id="",
-                mission_name=""
-            )
-        
+            logger.error(f"Error validando datos de la misión: {str(e)}"),
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail="Error validando datos de la misión")
+            
         # Preparar documento para MongoDB
         mission_doc = {
             "user_id": user_id,
@@ -130,20 +123,15 @@ async def create_secondary_mission(user_id, db) -> EventResponse:
         # Insertar en MongoDB
         response = await db.secondary.insert_one(prepare_for_mongo(mission_obj.dict()))
         
-        return EventResponse(
-            message="Mission create succes OK",
-            mission_id=mission_obj.id,
-            mission_name=mission_obj.nombre,
-            success=True
-        )
-        
+        return mission_obj
+    
+    except ValueError:
+        raise
+    except HTTPException:
+        raise
     except Exception as e:
-        return EventResponse(
-            message=f"Error en API de gemini: {str(e)}",
-            success=False,
-            mission_id="",
-            mission_name=""
-        )
+        logger.error(f"Error generando mission secundaria con la API de gemini: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail="Error generando mission secundaria")
 
 
 

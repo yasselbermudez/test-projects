@@ -1,6 +1,10 @@
-from .schemas import Logro, Mission, EventResponse
+from .schemas import Logro, Mission
+from fastapi import HTTPException,status
 import json
 from app.database.database import prepare_for_mongo
+
+import logging
+logger = logging.getLogger(__name__)
 
 # Importar desde el archivo init_missions.json
 with open('./init_missions.json', 'r', encoding='utf-8') as f:
@@ -10,7 +14,7 @@ with open('./init_logros.json', 'r', encoding='utf-8') as f:
     logros = json.load(f)
 
 async def initialize_missions(db):
-    # Obtener las misiones desde la variable cargada
+    
     try:
         for mission in missions:
             mission_obj = Mission(**mission)
@@ -18,12 +22,12 @@ async def initialize_missions(db):
             await db.missions.insert_one(mission_doc)
 
     except Exception as e:
-        print(f"Error durante la inserción: {type(e).__name__}: {e}")
-
-    return {"message": f"Initialized {len(missions)} missions."}
+        logger.error(f"Error initializing missions: {type(e).__name__}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error initializing missions")
+    return len(missions)
 
 async def initialize_logros(db):
-    # Obtener los logros desde la variable cargada
+   
     try:
         for logro in logros:
             logro_obj = Logro(**logro)
@@ -31,6 +35,6 @@ async def initialize_logros(db):
             await db.logros.insert_one(logro_doc)
 
     except Exception as e:
-        print(f"Error durante la inserción: {type(e).__name__}: {e}")
-
-    return {"message": f"Initialized {len(logros)} logros."}
+        logger.error(f"Error initializing logros: {type(e).__name__}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error initializing logros")
+    return len(logros)

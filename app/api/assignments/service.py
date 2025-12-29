@@ -1,14 +1,12 @@
 from fastapi import HTTPException,status
 from app.database.database import prepare_for_mongo
-from .schemas import AssignmentsMissionsResponse,EventResponse,Mission,Assignments, MissionType, ParamsUpdate,MissionStatus, ParamsUpdateVote
+from .schemas import AssignmentsMissionsResponse,Mission,Assignments, MissionType, ParamsUpdate,MissionStatus, ParamsUpdateVote
+from app.api.missions.schemas import Mission as PrimaryMission
 from datetime import datetime
 import json
-
 from ..history.schemas import Event
 from ..history.service import create_event
-
 from ..second_missions.service import create_secondary_mission
-from ..second_missions.schemas import EventResponse as CreateMissionResponse
 
 import logging
 logger = logging.getLogger(__name__)
@@ -16,11 +14,31 @@ logger = logging.getLogger(__name__)
 with open('./init_missions.json', 'r', encoding='utf-8') as f:
     missions = json.load(f)
 
+async def get_assignments(person_id: str, db) -> Assignments:
+    try:
+        assignments = await db.assignments.find_one({"person_id":person_id})
+        if not assignments:
+            logger.error(f"No se encontro asignaciones para el usuario con id: {person_id}."),
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail=f"No se encontro asignaciones para el usuario con id: {person_id}."
+                )
+        return Assignments(**assignments)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error obteniendo las asignaciones: ",str(e)),
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error obteniendo las asignaciones"
+        )
+
+
 async def create_assignments(
     person_id: str,
     user_name: str,
     db,
-) -> EventResponse:
+) -> dict:
     try:
         
         mission_data = Mission(
@@ -54,10 +72,10 @@ async def create_assignments(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error en create_assignments_simple: {str(e)}")
+        logger.error(f"Error en creando assignacion: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error interno al crear asignaciones"
+            detail="Error interno al crear asignacion"
         )
 
 # eliminar sustituir o agregar una mision a la asignacion
@@ -65,47 +83,30 @@ async def update_assignments_missions(
     user_id: str, 
     type:MissionType,
     db
-):
+)->Assignments:
     try:
         # Verificar si la asignación existe
         existing_assignment = await db.assignments.find_one({"person_id": user_id})
         
         if not existing_assignment:
-            return EventResponse(
-                id=user_id,
-                message=f"No se encontró asignación para el person_id: {user_id}",
-                success=False
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No se encontró asignación para el person_id: {user_id}",
             )
 
         # Preparar campos para actualización
         update_fields = {}
         
         if type==MissionType.SECONDARY:
-            # preparar la nueva misión
             new_mission = await create_secondary_mission(user_id,db)
-            
-            if not new_mission.success:
-                return EventResponse(
-                id=user_id,
-                message="No se pudo generar la mision secundaria",
-                success=False
-            )
 
         elif type==MissionType.MAIN:
             mission_id = existing_assignment[type]["mission_id"]
             new_mission = await get_next_primary_mission(mission_id,db)
-            
-            if not new_mission.success:
-            
-                return EventResponse(
-                id=user_id,
-                message="No se pudo encontrar la mision principal",
-                success=False
-            )
-
+        
         mission_obj = Mission(
-            mission_name=new_mission.mission_name,
-            mission_id=new_mission.mission_id
+            mission_name=new_mission.nombre,
+            mission_id=new_mission.id
         )   
     
         mission_doc = mission_obj.model_dump()
@@ -119,27 +120,22 @@ async def update_assignments_missions(
             {"person_id": user_id},
             {"$set": update_fields}
         )
-
-        if result.modified_count > 0:
-            return EventResponse(
-                id=user_id,
-                message="Misiones actualizadas exitosamente",
-                success=True
-            )
-        else:
-            return EventResponse(
-                id=user_id,
-                message="No se realizaron cambios en las misiones",
-                success=True
-            )
     
+        if result.modified_count > 0:
+            updated_assignment = await db.assignments.find_one({"person_id": user_id})
+            logger.info("Mission actualizada exitosamente en la asignacion")
+        else:
+            updated_assignment = existing_assignment
+            logger.info("No se realizaron cambios en las missiones de la asignacion")
+        return Assignments(**updated_assignment)
+    
+    except HTTPException:
+        raise
     except Exception as e:
-        print("ocurrio un error: ",str(e))
-        return EventResponse(
-            id=user_id,
-            message=f"Error actualizando las misiones: {str(e)}",
-            success=False
-        )
+        logger.error("Error actualizando las misiones de la assignaciones: ",str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Error interno sel servidor: {str(e)}")
 
 #obtener los documentos de cada una de las misiones de las asignaciones
 async def get_assignments_missions(person_id: str, db) -> AssignmentsMissionsResponse:
@@ -147,10 +143,14 @@ async def get_assignments_missions(person_id: str, db) -> AssignmentsMissionsRes
         assignments = await db.assignments.find_one({"person_id": person_id})
         
         if not assignments:
-           raise HTTPException(status_code=404, detail="Asignacion no encontrada")
+           logger.error(f"No se encontro asignaciones para el usuario con id: {person_id}.")
+           raise HTTPException(
+               status_code=status.HTTP_404_NOT_FOUND, 
+               detail=f"No se encontro asignacion para el usuario con id: {person_id}."
+               )
         
         assignments_obj = Assignments(**assignments)
-
+        print("********** Assignments: ",assignments_obj)
         # Buscar secondary_mission si existe
         secondary_mission = None
         if (assignments_obj.secondary_mission and 
@@ -175,75 +175,71 @@ async def get_assignments_missions(person_id: str, db) -> AssignmentsMissionsRes
         )
 
         return response
-        
+    except HTTPException:    
+        raise
     except Exception as e:
-        print(f"Error en get_assignments_missions: {e}")
-        return AssignmentsMissionsResponse()
+        logger.error("Error obteniendo las misiones de la assignaciones: ",str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Error interno en el servidor: {str(e)}"
+            )
 
 # actualizar parametros parciales de misiones en las asignaciones 
-async def update_assignments_missions_params(
+async def update_missions_params(
     person_id: str, 
     update_data: ParamsUpdate, 
     db
-):
+)->Assignments:
     """
     Endpoint para actualizar parámetros específicos de una misión
     - Solo actualiza misiones existentes (no null)
-    - Permite incrementar likes/dislikes
-    - Permite cambiar status y result
+    - Permite cambiar status,result,likes y dislikes
     """
     try:
         # Verificar si la asignación existe
         existing_assignment = await db.assignments.find_one({"person_id": person_id})
         
         if not existing_assignment:
-            return EventResponse(
-                id=person_id,
-                message=f"No se encontró asignación para el person_id: {person_id}",
-                success=False
-            )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail="Asignacion no encontrada"
+                )
 
         # Verificar que la misión a actualizar existe y no es null
         mission_field = update_data.mission_type.value
         current_mission = existing_assignment.get(mission_field)
         
         if current_mission is None:
-            return EventResponse(
-                id=person_id,
-                message=f"No se puede actualizar {mission_field} porque no existe",
-                success=False
+            logger.error(f"No se puede actualizar {mission_field} porque no existe")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No se puede actualizar {mission_field} porque no existe",
             )
 
         # Preparar operaciones de actualización
         update_operations = {}
         provided_data = update_data.model_dump(exclude_unset=True, exclude_none=True)
 
-        # Manejar campos regulares (status, result)
+        # Manejar campos regulares (status, result) y like y dislike como regulares tambien
         set_updates = {}
         if "status" in provided_data:
             set_updates[f"{mission_field}.status"] = provided_data["status"]
         if "result" in provided_data:
             set_updates[f"{mission_field}.result"] = provided_data["result"]
-        
+        if "like" in provided_data:
+            set_updates[f"{mission_field}.like"] = provided_data["like"]
+        if "dislike" in provided_data:
+            set_updates[f"{mission_field}.dislike"] = provided_data["dislike"]
+
         if set_updates:
             update_operations["$set"] = set_updates
 
-        # Manejar incrementos (like, dislike)
-        inc_updates = {}
-        if "like" in provided_data:
-            inc_updates[f"{mission_field}.like"] = provided_data["like"]
-        if "dislike" in provided_data:
-            inc_updates[f"{mission_field}.dislike"] = provided_data["dislike"]
-        
-        if inc_updates:
-            update_operations["$inc"] = inc_updates
-
         # Si no hay operaciones válidas
         if not update_operations:
-            return EventResponse(
-                id=person_id,
-                message="No se proporcionaron parámetros válidos para actualizar",
-                success=True
+            logger.error("No se proporcionaron parámetros válidos para actualizar")
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="No se proporcionaron parámetros válidos para actualizar",
             )
         
         # Ejecutar actualización
@@ -253,31 +249,26 @@ async def update_assignments_missions_params(
         )
 
         if result.modified_count > 0:
-            return EventResponse(
-                id=person_id,
-                message="Parámetros de misión actualizados exitosamente",
-                success=True
-            )
+            updated_assignment = await db.assignments.find_one({"person_id": person_id})
+            logger.info("No se realizaron cambios en la asignacion")
         else:
-            return EventResponse(
-                id=person_id,
-                message="No se realizaron cambios en los parámetros",
-                success=True
+            updated_assignment = existing_assignment
+            logger.info("Asignacion actualizada exitosamente")
+        return updated_assignment
+        
+    except Exception as e:
+        logger.error("Error actualizando los parametros de la assignaciones: ",str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Error actualizando los parametros: {str(e)}"
             )
     
-    except Exception as e:
-        return EventResponse(
-            id=person_id,
-            message=f"Error actualizando los parámetros: {str(e)}",
-            success=False
-        )
-    
-async def missions_params_vote(
+async def update_missions_params_vote(
     user_id: str, 
     voter_id: str,
     update_data: ParamsUpdateVote, 
     db
-):
+)->Assignments:
     """
     Endpoint para actualizar parámetros específicos de una misión
     - Permite incrementar likes/dislikes solo si el coter no esta en la lista de voters
@@ -288,10 +279,9 @@ async def missions_params_vote(
         existing_assignment = await db.assignments.find_one({"person_id": user_id})
         
         if not existing_assignment:
-            return EventResponse(
-                id=user_id,
-                message=f"No se encontró asignación para el person_id: {user_id}",
-                success=False
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                deatil=f"No se encontró asignación para el person_id: {user_id}",
             )
         
         # Verificar que la misión a actualizar existe y no es null
@@ -300,28 +290,26 @@ async def missions_params_vote(
         
 
         if current_mission is None:
-            return EventResponse(
-                id=user_id,
-                message=f"No se puede actualizar {mission_field} porque no existe",
-                success=False
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=f"No se puede actualizar {mission_field} porque no existe",
             )
+        
         # comprobar si voto el usuario
         voters = current_mission["voters"]
         for voter in voters:
             if voter == voter_id:
-                return EventResponse(
-                id=user_id,
-                message=f"El ususario ya voto ",
-                success=False
-            )
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"El usuario: {voter_id} ya voto",
+                )
 
         votesNeeded = update_data.group_size-1
     
         if len(voters)>=votesNeeded:
-            return EventResponse(
-                id=user_id,
-                message=f"La votacion esta llena",
-                success=False
+            raise HTTPException(
+                status_code=status.HTTP_406_NOT_ACCEPTABLE,
+                detail="La votacion esta llena",
             )
         #preparar la base de las operaciones de actualizacion
         update_operations = {}
@@ -349,21 +337,8 @@ async def missions_params_vote(
             set_updates[f"{mission_field}.status"] = status_result
             update_operations["$set"] = set_updates
             #archivamos la mission
-            archive_result = await archive_result_mission(user_id,current_mission,mission_field,status_result,db)
-            if not archive_result:
-                return EventResponse(
-                    id=user_id,
-                    message=f"No se pudo archivar la mision",
-                    success=False
-                )
-            
-            recompensa_result = await add_mission_recompensa(user_id,current_mission,mission_field,status_result,db)
-            if not recompensa_result:
-                return EventResponse(
-                    id=user_id,
-                    message=f"No se pudo registrar la recompensa",
-                    success=False
-                )
+            await archive_result_mission(user_id,current_mission,mission_field,status_result,db)
+            await add_mission_recompensa(user_id,current_mission,mission_field,status_result,db)
         else: 
             
             # Preparar operaciones de actualización de voto normales
@@ -389,10 +364,9 @@ async def missions_params_vote(
         
         # Si no hay operaciones válidas
         if not update_operations:
-            return EventResponse(
-                id=user_id,
-                message="No se proporcionaron parámetros válidos para actualizar",
-                success=True
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="No se proporcionaron parámetros válidos para actualizar",
             )
         
         # Ejecutar actualización
@@ -400,25 +374,22 @@ async def missions_params_vote(
             {"person_id": user_id},
             update_operations
         )
-
+        
         if result.modified_count > 0:
-            return EventResponse(
-                id=user_id,
-                message="Parámetros de misión actualizados exitosamente",
-                success=True
-            )
+            updated_assignment = await db.assignments.find_one({"person_id": user_id})
+            logger.info("Parametros de voto actualizados exitosamente en la asignacion")
         else:
-            return EventResponse(
-                id=user_id,
-                message="No se realizaron cambios en los parámetros",
-                success=True
-            )
-    
+            updated_assignment = existing_assignment
+            logger.info("No se realizaron cambios en los parametros de votos de la asignacion")
+        return Assignments(**updated_assignment)
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        return EventResponse(
-            id=user_id,
-            message=f"Error actualizando los parámetros: {str(e)}",
-            success=False
+        logger.error(f"Error procesando el voto: {type(e).__name__}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error procesando el voto",
         )
     
 async def archive_result_mission(user_id:str,current_mission:dict,mission_field:MissionType,status_result:str,db):
@@ -444,10 +415,10 @@ async def archive_result_mission(user_id:str,current_mission:dict,mission_field:
         )
         
         await create_event(event_data,db)
-        return True
+    except HTTPException:
+        raise
     except Exception as e:
-        print("error: ",{e})
-        return False
+        raise
 
 async def add_mission_recompensa(user_id:str,current_mission:dict,mission_field:str,status_result:str,db):
     # procesamos la recompensa en base al resultado de la mision
@@ -479,44 +450,39 @@ async def add_mission_recompensa(user_id:str,current_mission:dict,mission_field:
                 {"user_id": user_id}, 
                 {"$set": update_data}
             )
-        if result.matched_count > 0:
-            return True
-        else: return False
-        
+        if not result.matched_count > 0:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=f"No se pudo registrar la recompensa",
+            )
+        logger.info(f"Recompensa registrada para el user_id:{user_id}")
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Error durante la actualizacion: {type(e).__name__}: {e}")
-        return False
+        logger.error(f"Error procesando la recompensa: {type(e).__name__}: {e}")
+        raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error procesando la recompensa",
+            )
     
 
-async def get_next_primary_mission(mission_id:str,db)->CreateMissionResponse:
+async def get_next_primary_mission(mission_id:str,db)->PrimaryMission:
     try:
         mission_id_int = int(mission_id)
         next_mission_id = str(mission_id_int+1)
         next_mission = await db.missions.find_one({"id": next_mission_id})
         if not next_mission:
-            return CreateMissionResponse(
-                message="no se encontro nueva mission primaria",
-                mission_id="",
-                mission_name="",
-                success=False
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontro la siguiente mision principal",
             )
-        return CreateMissionResponse(
-                message="Siguiente mision principal encontrada",
-                mission_id=next_mission["id"],
-                mission_name=next_mission["nombre"],
-                success=True
-            )
-    except ValueError:
-        return CreateMissionResponse(
-            message="Error: mission_id no es un número válido",
-            mission_id="",
-            mission_name="",
-            success=False
-        )
+        return PrimaryMission(**next_mission)
+    
+    except HTTPException:
+        raise
     except Exception as e:
-        return CreateMissionResponse(
-            message=f"Error inesperado: {str(e)}",
-            mission_id="",
-            mission_name="",
-            success=False
-        )
+        logger.error(f"Error obteniendo siguiente mision principal: {type(e).__name__}: {e}")
+        raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error obteniendo siguiente mision principal",
+            )

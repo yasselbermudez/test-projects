@@ -1,14 +1,9 @@
 from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional
 from ..missions.schemas import Mission as MissionResponse
 from ..second_missions.schemas import SecondaryMission as SecondaryMissionResponse
-
-class EventResponse(BaseModel):
-    id: str
-    message: str
-    success: bool
 
 class MissionType(str, Enum):
     MAIN = "mission"
@@ -38,13 +33,10 @@ class Assignments(BaseModel):
     secondary_mission: Optional[Mission] = None
     group_mission: Optional[Mission] = None
 
-#endpoint que devuelve los documentos de las misiones asignadas
 class AssignmentsMissionsResponse(BaseModel): 
     mission: Optional[MissionResponse] = None
     secondary_mission: Optional[SecondaryMissionResponse] = None
 
-
-# actualizacion de la mision
 class MissionUpdate(BaseModel):
     mission_name: str 
     mission_id: str
@@ -54,7 +46,6 @@ class UpdateAssignments(BaseModel):
     secondary_mission: Optional[MissionUpdate] = None
     group_mission: Optional[MissionUpdate] = None
 
-# actualizaciones parciales de los parametros de las misiones de cada asignacion
 class ParamsUpdate(BaseModel):
     mission_type: MissionType
     status: Optional[MissionStatus] = None
