@@ -1,17 +1,18 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.api.api import api_router
 from app.core.config import settings
-from app.database.database import close_mongo_connection, connect_to_mongo
+from app.database.database import close_mongo_connection, connect_to_mongo, setup_ttl_indexes
 from starlette.middleware.cors import CORSMiddleware
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(
-        "app.main:app", 
-        host="localhost",  # ← Cambia de "127.0.0.1" a "localhost"
-        port=8000, 
-        reload=True
-    )
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup logic
+    await connect_to_mongo()
+    await setup_ttl_indexes()
+    yield
+    # Shutdown logic
+    await close_mongo_connection()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -22,6 +23,16 @@ app = FastAPI(
         "name": "Yassel",
         "email": "yasselbermudez8@gmail.com"
     },
+    lifespan=lifespan
+    )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "app.main:app", 
+        host="localhost",
+        port=8000, 
+        reload=True
     )
 
 app.add_middleware(
@@ -34,17 +45,9 @@ app.add_middleware(
 
 app.include_router(api_router,prefix=settings.API_V1_STR)
 
-# Check healty
 @app.get("/")
 def root():
     return {"message":"Iron Brothers API is runing"}
 
-@app.on_event("startup")
-async def startup_event():
-    await connect_to_mongo()
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    await close_mongo_connection()
 
 
