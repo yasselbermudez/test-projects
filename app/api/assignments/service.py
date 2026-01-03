@@ -150,7 +150,7 @@ async def get_assignments_missions(person_id: str, db) -> AssignmentsMissionsRes
                )
         
         assignments_obj = Assignments(**assignments)
-        print("********** Assignments: ",assignments_obj)
+        
         # Buscar secondary_mission si existe
         secondary_mission = None
         if (assignments_obj.secondary_mission and 

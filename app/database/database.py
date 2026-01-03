@@ -13,9 +13,10 @@ async def connect_to_mongo():
     # crear cliente si no existe 
     if client is None:
         client = AsyncIOMotorClient(MONGO_URL,serverSelectionTimeoutMS=5000, maxPoolSize=50)
+    
         # serverSelectionTimeoutMS: tiempo de espera por el servidor 
         # maxPoolSize: ajustar segun carga 
-    
+        
         try:
             # comprobar coneccion
             await client.admin.command('ping')
@@ -80,3 +81,25 @@ def parse_from_mongo(item):
                 result[key] = value
         return result
     return item
+
+async def setup_ttl_indexes():
+    """Configura los índices TTL necesarios en la base de datos."""
+    db = get_database()
+    if db is None:
+        raise Exception("Base de datos no inicializada")
+    
+    # Índices para refresh_tokens
+    await setup_refresh_token_indexes(db)
+    logging.info("✅ Índices TTL configurados")
+
+
+async def setup_refresh_token_indexes(db):
+    """Configura índices TTL específicos para refresh tokens"""
+    try:
+        await db.refresh_tokens.create_index(
+            [("delete_at", 1)],  # Campo y dirección
+            expireAfterSeconds=0,  # 0 = eliminar inmediatamente al superar la fecha
+            name="auto_delete_refresh_tokens"
+        )
+    except Exception as e:
+        logging.error("Error creando índice TTL para refresh_tokens: ", e)
