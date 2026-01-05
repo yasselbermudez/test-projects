@@ -6,7 +6,7 @@ from . import service
 from app.database.database import get_database
 import logging
 
-logger = logging.getLogger("auth_routes")
+logger = logging.getLogger("auth.routes")
 
 router = APIRouter()
 
@@ -46,46 +46,40 @@ async def register_user(user_data: UserCreate, response:Response, db=Depends(get
 
 @router.post("/login",response_model=User)
 async def login_user(login_data: UserLogin,response: Response, db=Depends(get_database)):
-    try:
-        logger.info(f"Attempting login for user: {login_data.email}")
+    
+    logger.info(f"Attempting login for user: {login_data.email}")
         
-        user = await service.authenticate_user(login_data,db)
+    user = await service.authenticate_user(login_data,db)
         
-        access_token = create_access_token(data={"sub": user.id})
-        refresh_token = create_refresh_token(data={"sub": user.id})
+    access_token = create_access_token(data={"sub": user.id})
+    refresh_token = create_refresh_token(data={"sub": user.id})
         
-        await service.save_refresh_token_to_db(user.id, refresh_token, db)
+    await service.save_refresh_token_to_db(user.id, refresh_token, db)
         
-        response.set_cookie(
-            key="access_token",            
-            value=access_token,
-            httponly=True,
-            secure=secure,
-            samesite="lax",
-            max_age=ACCESS_MAX_AGE,
-            path="/"
-        )
+    response.set_cookie(
+        key="access_token",            
+        value=access_token,
+        httponly=True,
+        secure=secure,
+        samesite="lax",
+        max_age=ACCESS_MAX_AGE,
+        path="/"
+    )
         
-        response.set_cookie(
-            key="refresh_token",
-            value=refresh_token,
-            httponly=True,
-            secure=secure,
-            samesite="lax",
-            max_age=REFRESH_MAX_AGE,
-            path="/"
-        )
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=secure,
+        samesite="lax",
+        max_age=REFRESH_MAX_AGE,
+        path="/"
+    )
 
-        # Opcional: crear y devolver un CSRF token que el cliente debe enviar en headers
-        # csrf_token = generate_csrf()  # función que genere token aleatorio
-        # response.set_cookie("csrf_token", csrf_token, httponly=False, secure=False, samesite="lax")
-        return user
-    except Exception as e:
-        logger.error(f"Failed login attempt for user {login_data.email}: {str(e)}")
-        raise
-    except HTTPException:
-        logger.warning(f"Failed login attempt for user: {login_data.email}")
-        raise
+    # Opcional: crear y devolver un CSRF token que el cliente debe enviar en headers
+    # csrf_token = generate_csrf()  # función que genere token aleatorio
+    # response.set_cookie("csrf_token", csrf_token, httponly=False, secure=False, samesite="lax")
+    return user
     
 @router.post("/refresh", response_model=User)
 async def refresh_token(response: Response,request:Request, db=Depends(get_database)):

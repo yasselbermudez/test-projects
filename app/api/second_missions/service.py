@@ -7,6 +7,7 @@ from .schemas import MissionApi, SecondaryMission
 from app.database.database import prepare_for_mongo
 from app.core.config import settings
 from google import genai
+from typing import Optional
 
 import logging
 logger = logging.getLogger(__name__)
@@ -14,9 +15,9 @@ logger = logging.getLogger(__name__)
 GOOGLE_API_KEY = settings.GOOGLE_API_KEY
 client = genai.Client(api_key=settings.GOOGLE_API_KEY)
 
-async def create_secondary_mission(user_id, db) -> SecondaryMission:
+async def create_secondary_mission(user_id:str,db,instruction:Optional[str]=None) -> SecondaryMission:
     try:
-        # Obtener datos del usuario
+        logger.info(f"creating a secondary mission for the user: {str(user_id)}")
         profile = await db.profiles.find_one(
             {"user_id": user_id},
             {   
@@ -24,9 +25,9 @@ async def create_secondary_mission(user_id, db) -> SecondaryMission:
                 "altura": 1, "pesos": 1, "objetivo": 1, "_id": 0
             }
         )
-        
-        # Verificar que se encontró el perfil
+    
         if not profile:
+            logger.error("Profile not found")
             return HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Profile not found")
         
         resumen = await db.summary.find_one(
@@ -39,16 +40,18 @@ async def create_secondary_mission(user_id, db) -> SecondaryMission:
             {"tipo": 1, "description": 1, "result": 1, "_id": 0}
         ).to_list(100)
 
-        # Construir el prompt
-        prompt = f"""
-        Eres un asistente que genera retos semanales personalizados para un grupo de amigos que se motivan en un juego donde cumplen retos y misiones
-        Genera un reto para una persona con las siguientes instrucciones:
-        El reto debe ser:
-        - CONCISO, con un ÚNICO OBJETIVO PRINCIPAL y ACCIONES DIRECTAS. 
-        - Divertido, realista y relacionado con gym,amistad,relaciones y superacion personal
-        - Alcanzable en 1 semana,no debe ser muy complicado de realizar 
-        - Personalizado según su historial,resumen y perfil
+        if not instruction:
+            instruction = """Eres un asistente que genera retos semanales personalizados para un grupo de amigos que se motivan en un juego donde cumplen retos y misiones
+                Genera un reto para una persona con las siguientes instrucciones:
+                El reto debe ser:
+                - CONCISO, con un ÚNICO OBJETIVO PRINCIPAL y ACCIONES DIRECTAS. 
+                - Relacionado con gym,amistad,relaciones,retos alocados,hacer el ridiculo,emprendimiento y superacion personal
+                - Realista y alcanzable en 1 semana,no debe ser muy complicado de realizar 
+                - Personalizado según su historial,resumen y perfil """
 
+        # Build the prompt
+        prompt = f"""
+        {instruction}
         Tendras la siguiente informacion de la persona:
         - Perfil: {profile}
         - Resumen: {resumen}
@@ -62,67 +65,64 @@ async def create_secondary_mission(user_id, db) -> SecondaryMission:
         }}
         """
 
-        # Llamar a la API de Google Gemini
+        # Call Google Gemini API
         try:
             response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=prompt
             )
         except Exception as e:
-            logger.error(f"Error el llamar a la api de gemini: {str(e)}")
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,detail="Error el llamar a la api de gemini")
+            logger.error(f"Error calling the Gemini API.: {str(e)}")
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,detail="Error calling the Gemini API.")
 
         # Procesar la respuesta
         if not response.text:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,detail="Respuesta vacía de gemini")
+            logger.error("Gemini API response is empty")
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,detail="Gemini API response is empty.")
 
         mission_content = response.text
         
-        # Limpiar y parsear el JSON
+        # Clean and parse the JSON
         try:
-            # Intentar parsear directamente
+            # Parse directly
             mission_dict = json.loads(mission_content)
         except json.JSONDecodeError as e:
-            # Si falla, intentar extraer JSON del texto
+            # Try to extract JSON from the text
             json_match = re.search(r'\{[^{}]*\}', mission_content.strip())
             if json_match:
                 try:
                     mission_dict = json.loads(json_match.group())
-                except json.JSONDecodeError:
-                    raise ValueError("No se pudo extraer JSON válido de la respuesta")
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to extract valid JSON from the response: {str(e)}")
+                    raise ValueError(f"Failed to extract valid JSON from the response: {str(e)}")
             else:
-                raise ValueError("No se encontró JSON en la respuesta")
+                logger.error("No JSON found in the response")
+                raise ValueError("No JSON found in the response")
         
         
         try:
-            # Mapear manualmente los campos
-            mission_data = {
-                "nombre": mission_dict.get("nombre", ""),
-                "descripcion": mission_dict.get("descripcion", ""),
-                "recompensa": mission_dict.get("recompensa", "100XP") 
-            }
-        
-            # Validar con Pydantic
-            mission_api_obj = MissionApi(**mission_data)
-        except Exception as e:
-            logger.error(f"Error validando datos de la misión: {str(e)}"),
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail="Error validando datos de la misión")
-            
-        # Preparar documento para MongoDB
-        mission_doc = {
-            "user_id": user_id,
-            "nombre": mission_api_obj.nombre,
-            "descripcion": mission_api_obj.descripcion,
-            "recompensa": mission_api_obj.recompensa,
-            "created": datetime.now(),
-            "is_active": True
-        }
+            # Manually map the JSON and validate
+            mission_api_obj = MissionApi (
+                nombre= mission_dict.get("nombre", ""),
+                descripcion= mission_dict.get("descripcion", ""),
+                recompensa= mission_dict.get("recompensa", "100XP") 
+            )
 
-        mission_obj = SecondaryMission(**mission_doc)
-        
-        # Insertar en MongoDB
+            mission_obj = SecondaryMission(
+                user_id= user_id,
+                nombre= mission_api_obj.nombre,
+                descripcion= mission_api_obj.descripcion,
+                recompensa= mission_api_obj.recompensa,
+                created= datetime.now(),
+                is_active= True
+            )
+
+        except Exception as e:
+            logger.error(f"Error validating mission data.: {str(e)}"),
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail="Error validating mission data.")
+            
         response = await db.secondary.insert_one(prepare_for_mongo(mission_obj.dict()))
-        
+        logger.info(f"Secondary mission created successfully with id: {str(response.inserted_id)}")
         return mission_obj
     
     except ValueError:
@@ -130,50 +130,5 @@ async def create_secondary_mission(user_id, db) -> SecondaryMission:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error generando mission secundaria con la API de gemini: {str(e)}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail="Error generando mission secundaria")
-
-
-
-
-
-
-
-
-
-
-
-    
-#prompt original
-"""
-prompt = {
-            "model": "deepseek-chat",  # modelo no pensante , deepseek-reasoner -> para modelo pensante
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "Eres un asistente creativo que genera misiones secundarias divertidas y alcanzables para un grupo de amigos que documentan sus experiencias en el gimnasio y póker."
-                },
-                {
-                    "role": "user", 
-                    "content": f"
-                    Somos un grupo de 5 amigos documentando nuestras aventuras en el gym y el póker. 
-                    Genera una misión secundaria creativa y personalizada para esta persona.
-                    
-                    PERFIL DEL JUGADOR:
-                    - Perfil: {perfil}
-                    - Resumen: {resumen}
-                    - Historial de misiones: {history}
-                    
-                    La misión debe ser:
-                    - Divertida y relacionada con gym/póker/amistad
-                    - Alcanzable en 1 semana
-                    - Personalizada según su historial y perfil
-                    - Incluir objetivos claros y recompensa en el rango de 100XP-1000XP
-                    
-                    Formato de respuesta: JSON con 'nombre', 'descripcion', 'objetivos', 'dificultad', 'recompensa'
-                    "
-                }
-            ],
-            "max_tokens": 1000
-        }
-"""
+        logger.error(f"Error generating secundary mission : {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=f"Error generating secundary mission : {str(e)}")

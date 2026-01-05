@@ -1,9 +1,13 @@
 from datetime import datetime
 from fastapi import  HTTPException,status
 from .schemas import Group,Member, UpdateGroup,UpdateMembers,CreateGroup
+import logging
+
+logger = logging.getLogger(__name__)
 
 async def create_group(group_data: CreateGroup, db) -> Group:
     try:
+        logger.info("Init create group")
         creator_member = Member(user_id=group_data.current_user_id, user_name=group_data.current_user_name)
 
         new_group = Group(
@@ -17,161 +21,196 @@ async def create_group(group_data: CreateGroup, db) -> Group:
         
         result = await db.groups.insert_one(new_group.dict())
 
-        if result.inserted_id:
-           
-            update_result = await db.users.update_one(
-                {"id": group_data.current_user_id}, 
-                {"$set": {"group_id": new_group.id}}
-            )
-            if update_result.modified_count == 0:
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Grupo creado pero usuario no actualizado")
-            return new_group
-        else: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="No se pudo crear el grupo")
-    
+        if not result.inserted_id:
+            logger.error("The group could not be created")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="The group could not be created")
+        
+        logger.info(f"Created group with id:{str(result.inserted_id)}")
+        
+        update_result = await db.users.update_one(
+            {"id": group_data.current_user_id}, 
+            {"$set": {"group_id": new_group.id}}
+        )
+
+        if update_result.modified_count == 0:
+            logger.error("Group created but user not updated")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Grupo creado pero usuario no actualizado")
+        
+        return new_group
+         
     except HTTPException:
         raise
-    except Exception as e: 
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al crear el grupo")
+    except Exception as e:
+        logger.error(f"Error creating group {str(e)}") 
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error creating group {str(e)}")
     
 
 async def update_members(group_id: str, update_data: UpdateMembers, db):
     try:
-       
+        logger.info("Init Update group member")
+        
         existing_group = await db.groups.find_one({"id": group_id})
         if not existing_group:
-            raise HTTPException(status_code=404, detail="Grupo no encontrado")
+            logger.error("Group not found")
+            raise HTTPException(status_code=404, detail="Group not found")
         
         group = Group(**existing_group)
 
-        # Operación de ELIMINAR miembro
+        # Delete member
         if update_data.remove:
-            # Verificar que no se está intentando eliminar al creador
-            if update_data.user_id == group.creator_id:
-                raise HTTPException(status_code=400, detail="No se puede eliminar al creador del grupo")
             
-            # Verificar que el usuario a eliminar existe en el grupo
+            if update_data.user_id == group.creator_id:
+                logger.error("The group creator cannot be removed")
+                raise HTTPException(status_code=400, detail="The group creator cannot be removed")
+            
             member_exists = any(member.user_id == update_data.user_id for member in group.members)
             if not member_exists:
-                raise HTTPException(status_code=404, detail="Usuario no encontrado en el grupo")
+                logger.error("User does not exist in the group")
+                raise HTTPException(status_code=404, detail="User does not exist in the group")
             
-            # Eliminar el miembro
+            # Exclude member
             updated_members = [member for member in group.members if member.user_id != update_data.user_id]
             new_group = None
         
-        # Operación de AGREGAR miembro
+        # Add member
         else:
-            # Validar que no haya más de 5 miembros
+            # No more than 5 members
             if len(group.members) >= 5:
-                raise HTTPException(status_code=400, detail="No puede haber más de 5 miembros en el grupo")
+                logger.error("The group cannot contain more than 5 members")
+                raise HTTPException(status_code=400, detail="The group cannot contain more than 5 members")
             
-            # Verificar que el usuario no esté ya en el grupo
+            # Verify that the user is not already in the group
             member_exists = any(member.user_id == update_data.user_id for member in group.members)
             if member_exists:
-                raise HTTPException(status_code=400, detail="El usuario ya es miembro del grupo")
+                logger.error("The user is already a member of the group")
+                raise HTTPException(status_code=400, detail="The user is already a member of the group")
             
-            # Agregar el nuevo miembro
+            # Add new member
             new_member = Member(user_id=update_data.user_id, user_name=update_data.user_name)
             updated_members = group.members + [new_member]
             new_group = group_id
         
-        # Actualizar el grupo en la base de datos
-        await db.groups.update_one(
+        group_update_result = await db.groups.update_one(
             {"id": group_id}, 
             {"$set": {"members": [member.dict() for member in updated_members]}}
         )
-        # actualizar el grupo de el usuario
-        await db.users.update_one(
+        if group_update_result.modified_count == 0:
+            logger.error("The group could not be updated")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="The group could not be updated")
+        
+        # Update user group information
+        user_update_result = await db.users.update_one(
             {"id": update_data.user_id}, 
             {"$set": {"group_id": new_group}}
         )
+        if user_update_result.modified_count == 0:
+            logger.error("Group upadted but user not updated")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Group upadted but user not updated")
         
-       
         updated_group = await db.groups.find_one({"id": group_id})
+        logger.info("Updated group members succes")
         return Group(**updated_group)
     
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al actualizar los miembros del grupo")
+        logger.error(f"Error updating group members: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error updating group members: {str(e)}")
 
 async def update_group(group_id: str, update_data: UpdateGroup, db):
     try:
+        logger.info("Init update group")
         existing_group = await db.groups.find_one({"id": group_id})
         if not existing_group:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Grupo no encontrado")
+            logger.error("Group not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
         
         group = Group(**existing_group)
         update_dict = {}
         
-        # Actualizar miembros si se proporcionan
+        
         if update_data.members:
-            # Validar que no haya más de 5 miembros
+            # 5 members max
             if len(update_data.members) > 5:
-                raise HTTPException(status_code=400, detail="No puede haber más de 5 miembros en el grupo")
+                logger.error("The group is full.")
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The group is full.")
             
-            # Verificar que el creador siga en el grupo
+            # The creator remains
             creator_still_member = any(member.user_id == group.creator_id for member in update_data.members)
             if not creator_still_member:
-                raise HTTPException(status_code=400, detail="El creador del grupo debe permanecer como miembro")
+                logger.error("The group creator must remain a member")
+                raise HTTPException(status_code=400, detail="The group creator must remain a member")
             
             update_dict["members"] = [member.dict() for member in update_data.members]
         
-        # Realizar la actualización
         if update_dict:
-            await db.groups.update_one({"id": group_id}, {"$set": update_dict})
-            # Obtener el grupo actualizado
-            updated_group = await db.groups.find_one({"id": group_id})
-            return Group(**updated_group)
+            result  = await db.groups.update_one({"id": group_id}, {"$set": update_dict})
         
-        return group
+        if result.modified_count == 0:
+            response_group = existing_group
+            logger.error("The group could not be updated")
+        else:
+            updated_group = await db.groups.find_one({"id": group_id})
+            response_group = Group(**updated_group)
+            logger.info(f"Group {group_id} updated successfully")
+
+        return response_group
+    
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Error updating group: {type(e).__name__}: {str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al actualizar el grupo")
 
 async def delete_group_by_id(group_id: str,db):
     try:
+        logger.info(f"Init delete group by id: {group_id}")
+        
         result = await db.groups.delete_one({"id": group_id})
         
-        if result.deleted_count == 1:
-            return {
-                "success": True,
-                "message": "Grupo eliminado exitosamente",
-                "deleted_id": group_id
-            }
-        else:
-            raise HTTPException(status_code=404, detail="Grupo no encontrado")
+        if result.deleted_count == 0:
+            logger.error("Grupo not found")
+            raise HTTPException(status_code=404, detail="Grupo not found")
+        
+        return True    
         
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al eliminar el grupo: {str(e)}")
+        logger.error(f"Error deleting group: {type(e).__name__}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error deleting group")
 
 async def delete_group_in_cascade(group_id: str,db):
     try:
+        logger.info(f"Init delete group in cascade: {group_id}")
+        group = await db.groups.find_one({"id": group_id})
+        group_obj = Group(**group)
+        group_size = len(group_obj.members)
         
-        grupo = await db.groups.find_one({"id": group_id})
-        if not grupo:
-            raise HTTPException(status_code=404, detail="Grupo no encontrado")
+        if not group:
+            logger.error("Grupo not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Grupo not found")
         
         delete_result = await db.groups.delete_one({"id": group_id})
         
         if delete_result.deleted_count != 1:
-            raise HTTPException(status_code=500, detail="Error al eliminar el grupo")
+            logger.error("Error deleting group")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al eliminar el grupo")
         
         update_result = await db.users.update_many(
             {"group_id": group_id},
             {"$set": {"group_id": None}}
         )
-        
-        return {
-            "success": True,
-            "message": f"Grupo eliminado y {update_result.modified_count} usuarios actualizados",
-            "deleted_group_id": group_id,
-        }
-        
+
+        if update_result.modified_count != group_size:
+            logger.error("Group deleted but not all users were updated")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Group deleted but not all users were updated")
+
+        logger.info("Group and associated users updated successfully")
+        return True
+
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error en eliminación: {str(e)}")
+        logger.error(f"Error in cascading deletion: {type(e).__name__}: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error in cascading deletion")

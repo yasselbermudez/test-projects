@@ -4,6 +4,16 @@ from app.api.api import api_router
 from app.core.config import settings
 from app.database.database import close_mongo_connection, connect_to_mongo, setup_ttl_indexes
 from starlette.middleware.cors import CORSMiddleware
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),  # Show in console
+        logging.FileHandler('app.log')  # Save to file
+    ]
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
