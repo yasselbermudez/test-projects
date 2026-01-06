@@ -11,7 +11,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# solucion temporal solo para desarrollo
+# only for develop
 valid_emails = ["javiersarduy0123@gmail.com","lazaroarielmachado@gmail.com","luisangelalfonso43@gmail.com","rodriguezrodriguezm163@gmail.com","yasselbermudez8@gmail.com"]
 
 async def validate_user_by_email(user_email:str,db) -> bool:
@@ -21,7 +21,6 @@ async def validate_user_by_email(user_email:str,db) -> bool:
     return False
 
 async def find_user_by_email(user_email:str,db) -> Optional[UserInDb]:
-    # Use the 'users' collection (ensure correct collection name)
     return await db.users.find_one({"email": user_email})
 
 async def get_user_by_id(user_id: str,db) -> Optional[UserInDb]:
@@ -122,7 +121,7 @@ async def validate_and_revoke_refresh_token(user_id: str, token: str, db) -> boo
     if not token_doc:
         return False
     
-    # 2. Verificar que no haya expirado
+    # verify expire at
     expires_at = token_doc.get("expires_at")
     if expires_at and expires_at < datetime.utcnow():
         await revoke_refresh_token_by_id(token_doc["_id"], db)
@@ -133,12 +132,12 @@ async def validate_and_revoke_refresh_token(user_id: str, token: str, db) -> boo
 
 async def cleanup_old_refresh_tokens(user_id: str, db, max_tokens: int = 2) -> None:
     try:
-        # Obtener todos los tokens del usuario (ordenados por creación)
+        # Obtain the tokens sorted by creation
         tokens = await db.refresh_tokens.find(
             {"user_id": user_id, "is_revoked": False}
         ).sort("created_at", -1).to_list(length=None)
         
-        # Si hay más de max_tokens, revocar los más antiguos
+        # Revoke the oldest ones
         if len(tokens) > max_tokens:
             tokens_to_revoke = tokens[max_tokens:]
             

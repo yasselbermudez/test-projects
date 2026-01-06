@@ -518,7 +518,7 @@ async def get_next_primary_mission(mission_id:str,db)->PrimaryMission:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="The following main mission was not found.",
             )
-        logger.info(f"Next primary mission found: {next_mission}")
+        logger.info(f"Next primary mission found")
         return PrimaryMission(**next_mission)
     
     except HTTPException:

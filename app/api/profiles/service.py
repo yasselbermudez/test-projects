@@ -50,19 +50,20 @@ async def initialize_profile_data(
         profile_id = profile_result.inserted_id
 
         if not profile_id:
-            logger.error(f"Error al insertar perfil para usuario {user.id}")
+            logger.error(f"Error inserting profile")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Error al guardar el perfil"
+                detail="Error inserting profile"
             )
-        logger.info(f"Perfil creado para usuario {user.id}")
+        logger.info(f"Profile created for user {user.id}")
 
-        await update_user_info(user.id, UpdateUser(is_active=True), db)
+        await update_user_info(user, UpdateUser(is_active=True), db)
         logger.info(f"User marked as active successfully.")
         
-        assignments_id = await create_assignments(user.id, user.name, db)
+        assignments_result = await create_assignments(user.id, user.name, db)
+        assignments_id = assignments_result["assignment_id"]
         logger.info(f"Initial assignment created.")
-        
+    
         return EventResponse(
             profile_id=str(profile_id),
             assignments_id=assignments_id,
@@ -94,10 +95,10 @@ async def update_the_profile_info(user_id: str, profile_info: ProfileUpdate, db)
         )
 
         if result.modified_count > 0:
-            logger.info(f"Perfil actualizado exitosamente")
+            logger.info(f"Profile updated successfully")
             profile_response = await db.profiles.find_one({"user_id": user_id})
         else:
-            logger.info(f"No se realizaron cambios en el perfil del usuario")
+            logger.info(f"No changes were made to the user profile.")
             profile_response = existing_profile
 
         return Profile(**parse_from_mongo(profile_response))
@@ -105,5 +106,5 @@ async def update_the_profile_info(user_id: str, profile_info: ProfileUpdate, db)
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error durante la actualizacion: {type(e).__name__}: {e}")
+        logger.error(f"Update profile error: {type(e).__name__}: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Update profile error")

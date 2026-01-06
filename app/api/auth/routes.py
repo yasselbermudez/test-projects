@@ -10,7 +10,7 @@ logger = logging.getLogger("auth.routes")
 
 router = APIRouter()
 
-secure = False  # Cambiar a True en producción (HTTPS)
+secure = True  # Cambiar a True en producción (HTTPS)
 
 REFRESH_MAX_AGE = settings.REFRESH_TOKEN_EXPIRE_DAYS*24*60*60
 ACCESS_MAX_AGE = settings.ACCESS_TOKEN_EXPIRE_MINUTES*60

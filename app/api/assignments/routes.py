@@ -16,7 +16,7 @@ async def get_one_assignments(person_id:str,db=Depends(get_database),user_id:str
 async def get_assignments_all_mission(person_id:str,db=Depends(get_database),user_id:str=Depends(get_current_user_id)):
     return await get_assignments_missions(person_id,db)
 
-@router.post("/",response_model = dict)
+@router.post("",response_model = dict)
 async def create_new_assignments(user:User=Depends(get_current_user),db=Depends(get_database)):
     return await create_assignments(user.id,user.name,db)
      

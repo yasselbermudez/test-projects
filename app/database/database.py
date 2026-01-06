@@ -3,6 +3,8 @@ import logging
 from app.core.config import settings
 from motor.motor_asyncio import AsyncIOMotorClient
 
+logger = logging.getLogger(__name__)
+
 MONGO_URL = settings.DATABASE_URL
 DB_NAME = settings.DB_NAME
 
@@ -10,21 +12,21 @@ client = None
 
 async def connect_to_mongo():
     global client
-    # crear cliente si no existe 
+    # create client if it does not exist
     if client is None:
         client = AsyncIOMotorClient(MONGO_URL,serverSelectionTimeoutMS=5000, maxPoolSize=50)
     
-        # serverSelectionTimeoutMS: tiempo de espera por el servidor 
-        # maxPoolSize: ajustar segun carga 
+        # serverSelectionTimeoutMS: server timeout
+        # maxPoolSize: adjust according to load 
         
         try:
             # comprobar coneccion
             await client.admin.command('ping')
-            logging.info("Connected to MongoDB")
+            logger.info("Connected to MongoDB")
         except Exception:
             client.close()
             client = None
-            logging.exception("Could not connect to MongoDB on startup")
+            logger.exception("Could not connect to MongoDB on startup")
             raise
 
     return client[DB_NAME]
@@ -43,22 +45,22 @@ def get_database():
         raise RuntimeError("Mongo client not initialized. Call connect_to_mongo() first.")
     return client[DB_NAME]
 
-# MongoDB almacena fechas como objetos Date de BSON, no como objetos Python
+# MongoDB stores dates as BSON Date objects, not as Python objects.
 def prepare_for_mongo(data):
-    # Si es un diccionario, procesa cada campo
+    # If it's a dictionary, process each field
     if isinstance(data, dict):
         result = {}
         for key, value in data.items():
-            # Caso 1: Si es datetime → convierte a string ISO
+            # Case 1: If it's a datetime object → convert to ISO string
             if isinstance(value, datetime):
                 result[key] = value.isoformat()
-            # Caso 2: Si es otro diccionario → recursión
+            # Case 2: If it's another dictionary → recursion
             elif isinstance(value, dict):
                 result[key] = prepare_for_mongo(value)
-            # Caso 3: Si es una lista → procesa cada elemento
+            # Case 3: If it's a list → process each element
             elif isinstance(value, list):
                 result[key] = [prepare_for_mongo(item) if isinstance(item, dict) else item for item in value]
-            # Caso 4: Otros tipos → copia directa
+            # Case 4: Other types → direct copy
             else:
                 result[key] = value
         return result
@@ -83,23 +85,22 @@ def parse_from_mongo(item):
     return item
 
 async def setup_ttl_indexes():
-    """Configura los índices TTL necesarios en la base de datos."""
+    "Configure the necessary TTL indexes in the database."
     db = get_database()
     if db is None:
-        raise Exception("Base de datos no inicializada")
+        raise Exception("Database not initialized")
     
-    # Índices para refresh_tokens
     await setup_refresh_token_indexes(db)
-    logging.info("✅ Índices TTL configurados")
+    logger.info("Índices TTL configurados")
 
 
 async def setup_refresh_token_indexes(db):
-    """Configura índices TTL específicos para refresh tokens"""
+    """Configure specific TTL indexes for refresh tokens"""
     try:
         await db.refresh_tokens.create_index(
-            [("delete_at", 1)],  # Campo y dirección
-            expireAfterSeconds=0,  # 0 = eliminar inmediatamente al superar la fecha
+            [("delete_at", 1)],  # Field and direction
+            expireAfterSeconds=0,  # 0 = delete immediately upon exceeding the date
             name="auto_delete_refresh_tokens"
         )
     except Exception as e:
-        logging.error("Error creando índice TTL para refresh_tokens: ", e)
+        logger.error(f"Error creating TTL index for refresh_tokens: {str(e)}")

@@ -13,15 +13,15 @@ REFRESH_TOKEN_SECRET_KEY=settings.REFRESH_TOKEN_SECRET_KEY
 ALGORITHM=settings.ALGORITHM
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verificar contraseña plana contra hash"""
+    "Verify plaintext password against hash"
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password: str) -> str:
-    """Obtener hash de contraseña"""
+    "Get password hash"
     return pwd_context.hash(password)
 
 def create_access_token(data: dict,expires_delta:Optional[timedelta] = None)-> str :
-    """Crear token JWT de acceso"""
+    """Create access JWT token"""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -32,7 +32,7 @@ def create_access_token(data: dict,expires_delta:Optional[timedelta] = None)-> s
     return token
 
 def create_refresh_token(data: dict,expires_delta:Optional[timedelta] = None)-> str :
-    """Crear token JWT para refresh"""
+    """Create refresh JWT token"""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -43,7 +43,7 @@ def create_refresh_token(data: dict,expires_delta:Optional[timedelta] = None)-> 
     return token
 
 def decode_access_token(token: str) -> Optional[dict]:
-    """Decodificar token JWT de acceso"""
+    """Decode access JWT token"""
     try:
         payload = jwt.decode(token, ACCESS_TOKEN_SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload
@@ -51,7 +51,7 @@ def decode_access_token(token: str) -> Optional[dict]:
         return None
     
 def decode_refresh_token(token: str):
-    """Decodificar token JWT para refresh"""
+    """Decode refresh JWT token"""
     try:
         payload = jwt.decode(token, REFRESH_TOKEN_SECRET_KEY, algorithms=[settings.ALGORITHM])
         

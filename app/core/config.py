@@ -1,4 +1,5 @@
 #from pydantic import field_validator
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -32,18 +33,16 @@ class Settings(BaseSettings):
     
     # CORS
     BACKEND_CORS_ORIGINS: str = "http://localhost:5173"
+    
+    # Convert a comma-separated string to a list.
     """
     @field_validator('BACKEND_CORS_ORIGINS', mode='before')
     @classmethod
     def parse_cors_origins(cls, v):
-        # Convierte string separado por comas a lista, o mantiene la lista si ya lo es.
         if isinstance(v, str):
-            # Si es string vacío, devuelve lista vacía
             if not v.strip():
                 return []
-            # Divide por comas y limpia espacios
             return [origin.strip() for origin in v.split(',')]
-        # Si ya es una lista, déjala tal cual
         return v
     """
     
