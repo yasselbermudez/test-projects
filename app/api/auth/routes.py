@@ -10,7 +10,9 @@ logger = logging.getLogger("auth.routes")
 
 router = APIRouter()
 
-secure = True  # Cambiar a True en producción (HTTPS)
+secure = True
+
+samesite = None
 
 REFRESH_MAX_AGE = settings.REFRESH_TOKEN_EXPIRE_MINUTES*60
 ACCESS_MAX_AGE = settings.ACCESS_TOKEN_EXPIRE_MINUTES*60
@@ -28,7 +30,7 @@ async def register_user(user_data: UserCreate, response:Response, db=Depends(get
         value=access_token,
         httponly=True,
         secure=secure,
-        samesite="lax",
+        samesite=samesite,
         max_age=ACCESS_MAX_AGE,
         path="/"
     )
@@ -38,7 +40,7 @@ async def register_user(user_data: UserCreate, response:Response, db=Depends(get
         value=refresh_token,
         httponly=True,
         secure=secure,
-        samesite="lax",
+        samesite=samesite,
         max_age=REFRESH_MAX_AGE,
         path="/"
     )
@@ -61,7 +63,7 @@ async def login_user(login_data: UserLogin,response: Response, db=Depends(get_da
         value=access_token,
         httponly=True,
         secure=secure,
-        samesite="lax",
+        samesite=samesite,
         max_age=ACCESS_MAX_AGE,
         path="/"
     )
@@ -71,7 +73,7 @@ async def login_user(login_data: UserLogin,response: Response, db=Depends(get_da
         value=refresh_token,
         httponly=True,
         secure=secure,
-        samesite="lax",
+        samesite=samesite,
         max_age=REFRESH_MAX_AGE,
         path="/"
     )
@@ -96,7 +98,7 @@ async def refresh_token(response: Response,request:Request, db=Depends(get_datab
         value=new_access_token,
         httponly=True,
         secure=secure,  
-        samesite="lax",
+        samesite=samesite,
         max_age=ACCESS_MAX_AGE,
         path="/"
     )
@@ -106,7 +108,7 @@ async def refresh_token(response: Response,request:Request, db=Depends(get_datab
         value=new_refresh_token,
         httponly=True,
         secure=secure, 
-        samesite="lax",
+        samesite=samesite,
         max_age=REFRESH_MAX_AGE,
         path="/"
     )
