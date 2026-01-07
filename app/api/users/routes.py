@@ -9,7 +9,7 @@ router = APIRouter()
 async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
-@router.put("/",response_model=User)
+@router.put("",response_model=User)
 async def update_user(user_info: UpdateUser,user: User =Depends(get_current_user), db=Depends(get_database)):
     return await update_user_info(user,user_info,db)
     

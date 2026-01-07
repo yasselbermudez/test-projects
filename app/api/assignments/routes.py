@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends
 from app.api.auth.schemas import User
 from app.api.users.service import get_current_user, get_current_user_id
@@ -10,12 +11,12 @@ router = APIRouter()
 @router.get("/{person_id}",response_model = Assignments)
 async def get_one_assignments(person_id:str,db=Depends(get_database),user_id:str=Depends(get_current_user_id)):
     return await get_assignments(person_id,db)
-
+  
 @router.get("/{person_id}/missions",response_model = AssignmentsMissionsResponse)
 async def get_assignments_all_mission(person_id:str,db=Depends(get_database),user_id:str=Depends(get_current_user_id)):
     return await get_assignments_missions(person_id,db)
 
-@router.post("/",response_model = dict)
+@router.post("",response_model = dict)
 async def create_new_assignments(user:User=Depends(get_current_user),db=Depends(get_database)):
     return await create_assignments(user.id,user.name,db)
      

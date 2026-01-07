@@ -6,7 +6,6 @@ from app.database.database import prepare_for_mongo
 import logging
 logger = logging.getLogger(__name__)
 
-# Importar desde el archivo init_missions.json
 with open('./init_missions.json', 'r', encoding='utf-8') as f:
     missions = json.load(f)
 
@@ -14,8 +13,8 @@ with open('./init_logros.json', 'r', encoding='utf-8') as f:
     logros = json.load(f)
 
 async def initialize_missions(db):
-    
     try:
+        logger.info("Initializing missions data")
         for mission in missions:
             mission_obj = Mission(**mission)
             mission_doc = prepare_for_mongo(mission_obj.dict())
@@ -27,8 +26,8 @@ async def initialize_missions(db):
     return len(missions)
 
 async def initialize_logros(db):
-   
     try:
+        logger.info("Initializing logros data")
         for logro in logros:
             logro_obj = Logro(**logro)
             logro_doc = prepare_for_mongo(logro_obj.dict())

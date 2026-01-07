@@ -7,9 +7,13 @@ from app.core.security import decode_refresh_token, get_password_hash, verify_pa
 from fastapi import HTTPException, Request,status
 from .schemas import RefreshToken, UserCreate, UserLogin, User,UserInDb
 from app.database.database import prepare_for_mongo, parse_from_mongo
+import logging
 
+logger = logging.getLogger(__name__)
+
+# only for develop
 valid_emails = ["javiersarduy0123@gmail.com","lazaroarielmachado@gmail.com","luisangelalfonso43@gmail.com","rodriguezrodriguezm163@gmail.com","yasselbermudez8@gmail.com"]
-# solucion temporal solo para desarrollo
+
 async def validate_user_by_email(user_email:str,db) -> bool:
     for email in valid_emails:
         if email==user_email:
@@ -17,7 +21,6 @@ async def validate_user_by_email(user_email:str,db) -> bool:
     return False
 
 async def find_user_by_email(user_email:str,db) -> Optional[UserInDb]:
-    # Use the 'users' collection (ensure correct collection name)
     return await db.users.find_one({"email": user_email})
 
 async def get_user_by_id(user_id: str,db) -> Optional[UserInDb]:
@@ -52,20 +55,25 @@ async def create_user(user_data:UserCreate,db) -> User:
 
 
 async def authenticate_user(login_data:UserLogin,db) -> User:
-    
-    existing_user = await find_user_by_email(login_data.email,db)
-    if not existing_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    
-    hashed_password = existing_user.get('hashed_password')
-    is_verify = verify_password(login_data.password, hashed_password)
+    try:
+        existing_user = await find_user_by_email(login_data.email,db)
+        if not existing_user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        
+        hashed_password = existing_user.get('hashed_password')
+        is_verify = verify_password(login_data.password, hashed_password)
 
-    if not is_verify:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+        if not is_verify:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
-    user_obj = User(**parse_from_mongo(existing_user))
+        user_obj = User(**parse_from_mongo(existing_user))
 
-    return  user_obj
+        return  user_obj
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Authentication error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Authentication error")
 
 async def save_refresh_token_to_db(
     user_id: str, 
@@ -74,7 +82,7 @@ async def save_refresh_token_to_db(
 ) -> str:
     try:
         
-        expires_at = datetime.utcnow() + timedelta(settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        expires_at = datetime.utcnow() + timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
         
         variation = timedelta(hours=random.randint(0, 12))
         delete_at = datetime.utcnow() + timedelta(days=30) + variation
@@ -113,7 +121,7 @@ async def validate_and_revoke_refresh_token(user_id: str, token: str, db) -> boo
     if not token_doc:
         return False
     
-    # 2. Verificar que no haya expirado
+    # verify expire at
     expires_at = token_doc.get("expires_at")
     if expires_at and expires_at < datetime.utcnow():
         await revoke_refresh_token_by_id(token_doc["_id"], db)
@@ -124,12 +132,12 @@ async def validate_and_revoke_refresh_token(user_id: str, token: str, db) -> boo
 
 async def cleanup_old_refresh_tokens(user_id: str, db, max_tokens: int = 2) -> None:
     try:
-        # Obtener todos los tokens del usuario (ordenados por creación)
+        # Obtain the tokens sorted by creation
         tokens = await db.refresh_tokens.find(
             {"user_id": user_id, "is_revoked": False}
         ).sort("created_at", -1).to_list(length=None)
         
-        # Si hay más de max_tokens, revocar los más antiguos
+        # Revoke the oldest ones
         if len(tokens) > max_tokens:
             tokens_to_revoke = tokens[max_tokens:]
             
@@ -154,6 +162,7 @@ async def revoke_refresh_token(token: str, db) -> None:
             {"$set": {"is_revoked": True}}
         )
     except Exception as e:
+        logger.error(f"Error revoking refresh token: {str(e)}")
         raise HTTPException(status_code=500, detail="Error revoking refresh token")
     
 async def revoke_refresh_token_by_id(id: str, db) -> None:

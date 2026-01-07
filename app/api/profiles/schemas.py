@@ -3,8 +3,8 @@ from pydantic import BaseModel, Field
 from typing import Dict, Optional
 
 class EventResponse(BaseModel):
-    message: str
-    success: bool
+    profile_id: str
+    assignments_id: str
 
 class Deuda(BaseModel):
     tipo: str
