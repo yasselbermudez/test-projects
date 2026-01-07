@@ -1,11 +1,11 @@
-FROM python:3.13-slim
+FROM python:3.12-slim
 
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /code
+WORKDIR /app
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
@@ -13,7 +13,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 COPY . .
 
-RUN chmod +x /code/entrypoint.sh
+RUN sed -i 's/\r$//' /app/entrypoint.sh && \
+    chmod +x /app/entrypoint.sh
 
-ENTRYPOINT ["/code/entrypoint.sh"]
-
+ENTRYPOINT ["/app/entrypoint.sh"]

@@ -12,7 +12,7 @@ router = APIRouter()
 
 secure = True  # Cambiar a True en producción (HTTPS)
 
-REFRESH_MAX_AGE = settings.REFRESH_TOKEN_EXPIRE_DAYS*24*60*60
+REFRESH_MAX_AGE = settings.REFRESH_TOKEN_EXPIRE_MINUTES*60
 ACCESS_MAX_AGE = settings.ACCESS_TOKEN_EXPIRE_MINUTES*60
 
 @router.post("/register",status_code=status.HTTP_201_CREATED,response_model=User)

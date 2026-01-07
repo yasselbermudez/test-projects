@@ -82,7 +82,7 @@ async def save_refresh_token_to_db(
 ) -> str:
     try:
         
-        expires_at = datetime.utcnow() + timedelta(settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        expires_at = datetime.utcnow() + timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
         
         variation = timedelta(hours=random.randint(0, 12))
         delete_at = datetime.utcnow() + timedelta(days=30) + variation

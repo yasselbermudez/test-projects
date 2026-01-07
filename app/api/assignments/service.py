@@ -105,7 +105,7 @@ async def update_assignments_missions(
         
         if type==MissionType.SECONDARY:
             new_mission = await create_secondary_mission(user_id,db)
-            logger.info(f"New secondary mission created: {new_mission}")
+            logger.info(f"New secondary mission created successfully")
         elif type==MissionType.MAIN:
             mission_id = existing_assignment[type]["mission_id"]
             new_mission = await get_next_primary_mission(mission_id,db)
@@ -117,12 +117,10 @@ async def update_assignments_missions(
         )   
         logger.info("New mission validated")
         mission_doc = mission_obj.model_dump()
-        # en este punto se genera:creation_date=datetime.datetime(2025, 11, 4, 11, 15, 18, 553625) que es convertido automaticamente por mongo 
-        # # Convertir datetime a string ISO pero es recomendable cambiar al craar la asignacion a el formato {"$date": "..."} de mongo
+        # temporarily convert datetime to ISO string
         mission_doc["creation_date"] = mission_doc["creation_date"].isoformat()
         update_fields[type] = mission_doc
         
-        # Ejecutar actualización
         result = await db.assignments.update_one(
             {"person_id": user_id},
             {"$set": update_fields}
@@ -143,8 +141,6 @@ async def update_assignments_missions(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail=f"Error updating the assignment missions: {str(e)}")
-
-
 
 async def get_assignments_missions(person_id: str, db) -> AssignmentsMissionsResponse:
     try:
@@ -350,10 +346,9 @@ async def update_missions_params_vote(
             like_count+=1
             set_updates[f"{mission_field}.like"] = like_count
         else:
-            set_updates[f"{mission_field}.dislike"] = dislike_count
             dislike_count+=1
-
-        
+            set_updates[f"{mission_field}.dislike"] = dislike_count
+            
         # We check if it's the last vote
         if len(voters)+1>=votesNeeded:
 
@@ -518,7 +513,7 @@ async def get_next_primary_mission(mission_id:str,db)->PrimaryMission:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="The following main mission was not found.",
             )
-        logger.info(f"Next primary mission found")
+        logger.info(f"Next primary mission found successfully")
         return PrimaryMission(**next_mission)
     
     except HTTPException:
