@@ -12,7 +12,7 @@ router = APIRouter()
 
 secure = True
 
-samesite = None
+samesite = "none"
 
 REFRESH_MAX_AGE = settings.REFRESH_TOKEN_EXPIRE_MINUTES*60
 ACCESS_MAX_AGE = settings.ACCESS_TOKEN_EXPIRE_MINUTES*60
