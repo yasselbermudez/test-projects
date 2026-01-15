@@ -1,6 +1,6 @@
 from fastapi import HTTPException,status
 from app.database.database import prepare_for_mongo
-from .schemas import AssignmentsMissionsResponse,Mission,Assignments, MissionType, ParamsUpdate,MissionStatus, ParamsUpdateVote
+from .schemas import AssignmentsMissionsResponse,Mission,MissionResponse,Assignments, MissionType, ParamsUpdate,MissionStatus, ParamsUpdateVote
 from app.api.missions.schemas import Mission as PrimaryMission
 from datetime import datetime
 import json
@@ -170,6 +170,7 @@ async def get_assignments_missions(person_id: str, db) -> AssignmentsMissionsRes
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Secondary mission with id {assignments_obj.secondary_mission.mission_id} not found."
                 )
+            secondary_mission=MissionResponse(**secondary_mission)
         
         # Search for primary_mission if it exists.
         mission = None
@@ -185,6 +186,7 @@ async def get_assignments_missions(person_id: str, db) -> AssignmentsMissionsRes
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Primary mission with id {assignments_obj.mission.mission_id} not found."
                 )
+            mission=MissionResponse(**mission)
 
         response =  AssignmentsMissionsResponse(
             mission=mission,
@@ -285,7 +287,7 @@ async def update_missions_params_vote(
     voter_id: str,
     update_data: ParamsUpdateVote, 
     db
-)->Assignments:
+) -> Assignments:
     """
     Endpoint to update specific parameters of a mission.
     - Allows increasing likes/dislikes only if the voter is not already in the list of voters.

@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel
 from typing import Optional
-from ..missions.schemas import Mission as MissionResponse
+from ..missions.schemas import Extra, MissionLogro, Nivel
 from ..second_missions.schemas import SecondaryMission as SecondaryMissionResponse
 
 class MissionType(str, Enum):
@@ -33,9 +33,20 @@ class Assignments(BaseModel):
     secondary_mission: Optional[Mission] = None
     group_mission: Optional[Mission] = None
 
+class MissionResponse(BaseModel):
+    id: str
+    nombre: str
+    recompensa: str
+    descripcion: str
+    imagen: Optional[str]=None
+    nivel: Optional[Nivel] = None
+    extra: Optional[Extra] = None
+    logro: Optional[MissionLogro] = None
+
 class AssignmentsMissionsResponse(BaseModel): 
     mission: Optional[MissionResponse] = None
-    secondary_mission: Optional[SecondaryMissionResponse] = None
+    secondary_mission: Optional[MissionResponse] = None
+    group_mission: Optional[MissionResponse] = None
 
 class MissionUpdate(BaseModel):
     mission_name: str 

@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     )
     
     # Application
-    PROJECT_NAME: str = "Online Store API"
+    PROJECT_NAME: str = "Iron Brothers"
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     DEBUG: bool = True
