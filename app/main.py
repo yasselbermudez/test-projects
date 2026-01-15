@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.api.api import api_router
@@ -27,7 +28,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    description="API para un juego de participacion en línea.",
+    description="API for an online participation game.",
     docs_url="/docs",
     contact={
         "name": "Yassel",
@@ -47,10 +48,10 @@ if __name__ == "__main__":
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS, # OR use ["*"] solo en desarrollo
-    allow_credentials=True,                      # necesario si vas a usar cookies
-    allow_methods=["*"],                         # permite OPTIONS, GET, POST, PUT, DELETE...
-    allow_headers=["*"],                         # permite Content-Type, Authorization, etc.
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_credentials=True,                      # Necessary if use cookies
+    allow_methods=["*"],                         # Allow OPTIONS, GET, POST, PUT, DELETE...
+    allow_headers=["*"],                         # Allow Content-Type, Authorization, etc.
 )
 
 app.include_router(api_router,prefix=settings.API_V1_STR)

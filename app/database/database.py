@@ -91,8 +91,7 @@ async def setup_ttl_indexes():
         raise Exception("Database not initialized")
     
     await setup_refresh_token_indexes(db)
-    logger.info("Índices TTL configurados")
-
+    logger.info("TTL Indexes configured")
 
 async def setup_refresh_token_indexes(db):
     """Configure specific TTL indexes for refresh tokens"""

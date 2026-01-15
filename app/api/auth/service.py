@@ -11,15 +11,15 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# only for develop
-valid_emails = ["javiersarduy0123@gmail.com","lazaroarielmachado@gmail.com","luisangelalfonso43@gmail.com","rodriguezrodriguezm163@gmail.com","yasselbermudez8@gmail.com"]
-
 async def validate_user_by_email(user_email:str,db) -> bool:
-    for email in valid_emails:
-        if email==user_email:
+    try:
+        result = await db.emails.find_one({"email": user_email})
+        if result:
             return True
-    return False
-
+        return False
+    except:
+        return False
+    
 async def find_user_by_email(user_email:str,db) -> Optional[UserInDb]:
     return await db.users.find_one({"email": user_email})
 
